@@ -9,6 +9,8 @@ services:
       - mcp-data:/data
       # Optional, only for editing allowlisted YAML package files:
       # - /absolute/path/to/ha-config:/homeassistant:rw
+      # Blueprint reads/review need the same connected HA config; read-only is sufficient:
+      # - /absolute/path/to/ha-config:/homeassistant:ro
       # Optional HTTPS client certificates:
       # - ./secrets:/run/secrets:ro
     read_only: true

@@ -20,6 +20,13 @@ configuration:
     description: 'Normally leave blank. For a manual connection, open your Home Assistant user profile → Security
       → Long-lived access tokens, create a token, and paste it here. Automation editing and traces require an administrator
       account. Blank = use HAOS automatic authentication. Setup links: open Web UI or the Documentation tab. https://my.home-assistant.io/redirect/profile/'
+  allow_blueprint_writes:
+    name: Allow explicitly accepted blueprint changes
+    description: 'Keep off until ChatGPT is set to ask every time for apply_blueprint_change. Create, update, and
+      delete each require review of the exact proposal and explicit acceptance. Updates can reload all consumers;
+      deletion can break references. HAOS provides the config mount automatically. Compose needs the connected HA
+      config mounted, which can be read-only for blueprint API writes. Default: off. Independent of automation editing
+      permission. Setup links: open Web UI or the Documentation tab. https://github.com/tobias-/hassos-mcp#blueprint-crud-and-acceptance'
   allow_automation_writes:
     name: Allow approved automation edits
     description: 'Keep off during setup. To enable editing, first configure ChatGPT to ask every time for apply_automation_change,

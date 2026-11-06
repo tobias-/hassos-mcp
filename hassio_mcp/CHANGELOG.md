@@ -1,3 +1,11 @@
+# 0.4.0
+
+- Add blueprint list/read and reviewed create/update/delete for automation, script, and template domains.
+- Require explicit acceptance before every apply; add a separate disabled-by-default blueprint write setting.
+- Persist exact diffs and before/after backups, with expiry, stale-file detection, and one-time application.
+- Use HA's native save/delete APIs; report failures as uncertain without unsafe retries or fallback writes.
+- Add linked setup guidance and verification for blueprint permissions and recovery.
+
 # 0.3.0
 
 - Add a persistent suggestion box for LLM feature requests and observed bugs.

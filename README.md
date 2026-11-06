@@ -10,14 +10,17 @@ A private MCP server for ChatGPT, running as a local HAOS app/add-on or Docker C
 - Read loaded UI/YAML/blueprint automation configuration, stored execution traces, and error logs.
 - Propose and review exact changes, then create/edit UI automations or edit existing automations in explicitly allowlisted YAML files.
 - Save and review persistent suggestions for missing capabilities and observed bugs.
+- List/read automation, script, and template blueprints; propose create/update/delete and apply only after explicit acceptance.
 
-No generic service-call, delete, toggle, or manually-trigger-automation tool is exposed. Saving an automation can activate its triggers, so apply is marked destructive and non-read-only.
+No generic service-call, automation-delete, toggle, or manually-trigger-automation tool is exposed. Saving an automation or updating a blueprint can activate behavior, so both apply tools are marked destructive and non-read-only.
 
 ## Access and approval model
 
 This deployment assumes a **single-user Platform organization and private ChatGPT workspace/app**. Access is enforced by OpenAI tunnel membership and permissions, not by an email address supplied to an MCP tool. Associate the tunnel only with your personal organization/workspace. Do not share the app or tunnel. If either context gains other users, revisit authentication before granting them access; this server does not independently authenticate ChatGPT user IDs.
 
 Set ChatGPT to ask for confirmation **every time** `apply_automation_change` is used. Read the proposal's diff before approving. The tool requires the exact stored proposal ID and digest, rejects stale/expired proposals, and consumes each proposal once. These checks bind the operation to reviewed content; they do **not** cryptographically prove that a human clicked approval. ChatGPT's confirmation policy is the human approval boundary. Writes default to disabled until you set `allow_automation_writes` / `ALLOW_AUTOMATION_WRITES=true` after checking that policy.
+
+Blueprint modifications have the same confirmation boundary: configure **ask every time** for `apply_blueprint_change`, including creation and deletion. They have a separate `allow_blueprint_writes` / `ALLOW_BLUEPRINT_WRITES` switch, defaulting to false. General permission to manage blueprints is not acceptance of a particular change.
 
 Proposals expire after 30 minutes. Before/after configurations and status are persisted in a private SQLite database under `/data/state`. An interrupted write is not retried automatically. Use `automation_change_status`, read current HA state/configuration, and make a fresh proposal if needed. Treat the state volume as sensitive and include it in backups. Stop the old deployment before starting another with the same tunnel ID: run **one** tunnel instance.
 
@@ -80,7 +83,7 @@ After upgrading to 0.3.0, refresh the plugin's tools in ChatGPT to discover the 
 
 ## YAML editing and recovery limits
 
-UI-managed edits go through Home Assistant's config API, which validates and saves `automations.yaml` and schedules a reload. Direct file editing accepts automation-list files or packages with a top-level `automation` list, requires an existing unique `id`, preserves tags/comments, and shows the complete file diff. It does not expand arbitrary includes or expose `secrets.yaml`. For blueprints, edit the automation's `use_blueprint` inputs, not the blueprint template.
+UI-managed edits go through Home Assistant's config API, which validates and saves `automations.yaml` and schedules a reload. Direct file editing accepts automation-list files or packages with a top-level `automation` list, requires an existing unique `id`, preserves tags/comments, and shows the complete file diff. It does not expand arbitrary includes or expose `secrets.yaml`. Automation tools edit a blueprint consumer's `use_blueprint` inputs; use the separate blueprint tools below to modify the shared template.
 
 For direct YAML files, the server first checks the existing configuration, atomically replaces the file, runs HA's full config check, and restores the original if validation fails and the file has not changed externally. It then reloads automations. A failed reload is reported as uncertain and retains the backup; it does not claim rollback succeeded.
 
@@ -90,6 +93,25 @@ Backups are stored in `changes.sqlite3`, table `proposals`, JSON column `payload
 
 History queries enforce explicit timezone-aware ranges and response limits. Narrow a query if it exceeds the size limit. Recorder reads permit 31-day windows; statistics and Influx queries permit up to 366 days. Influx returns at most 5000 points per series; use smaller windows when that limit is reached. Measurements discovery is limited to 500 entries. Unrecorded or expired values cannot be recovered by this MCP.
 
+## Blueprint CRUD and acceptance
+
+1. Use `list_blueprints` for installed metadata/inputs and load errors in the `automation`, `script`, or `template` domain. Use `get_blueprint` for the exact YAML at a relative path such as `author/name.yaml`.
+2. Call `propose_blueprint_change` with `operation: create`, `update`, or `delete`. Create/update require complete `config_yaml`; delete must omit it. The proposal stores the before/after content and returns the exact diff without modifying HA.
+3. Show the user the operation, path, diff, and effects on consumers. **Wait for explicit acceptance of that proposal.** Only then call `apply_blueprint_change` with its `proposal_id` and `approved_digest`. Keep the client's confirmation enabled on every apply call.
+4. Inspect `blueprint_change_status` and the current blueprint after applying. A proposal expires after 30 minutes, can be applied only once, and is rejected if the current file differs from the snapshot. An interrupted apply can remain `applying`; API or verification failures become `failed_or_uncertain`. Neither is retried automatically.
+
+Metadata listing uses HA's API and works without a config mount. YAML reads and all proposals/applications require **the same HA instance's configuration directory** at `HA_CONFIG_DIR` (default `/homeassistant`). HAOS already supplies this mount. For Compose, mount the connected HA instance's config directory at `/homeassistant`; a read-only mount is sufficient for blueprint operations because changes go through HA's API. An unrelated or stale copy of the config is not suitable for review or stale-change detection.
+
+Reads are confined to `blueprints/<domain>/...yaml`, reject traversal/symlinks, and are capped at 128 KiB per blueprint. Proposed YAML supports `!input`, including input sections, but rejects `!include`/`!secret` and other custom tags. Local checks validate the basic structure and domain; HA performs blueprint schema/input validation when saving. This is not a runtime test of every possible input or consumer.
+
+Writes use native `blueprint/save` (`allow_override` only for an accepted update) and `blueprint/delete`. The API contract was checked against Home Assistant 2026.11.0. Older releases that reject these operations are reported as failures; there is no unreviewed delete/recreate or direct-file-write fallback. HA can normalize defaults and YAML formatting and remove comments. The server compares saved YAML content with the proposal, ignoring formatting and the default empty input map; an unexpected difference is reported as uncertain and preserves the backup.
+
+Updating can reload all consumers and activate changed automation/script/template behavior. Deleting can break references; current HA rejects blueprints it considers in use, and this server does not bypass that rejection. The proposal does not claim to enumerate every dependency. Native HA writes have no shared conditional-write transaction with this server: avoid simultaneous UI/file edits, as a narrow check/write race remains. If an update or verification fails, there is no automatic rollback because the API may already have reloaded consumers.
+
+Backups and proposal status persist in `/data/state/blueprint_changes.sqlite3`, table `proposals`, JSON column `payload` (`before`, `after`, `diff`). They are also readable via `blueprint_change_status`. A restoration requires a new proposal and fresh acceptance. Include app data in backups. Update the add-on to **0.4.0**, refresh ChatGPT's plugin tools, and enable `allow_blueprint_writes` only after setting confirmation for `apply_blueprint_change`.
+
+References: [Blueprint schema](https://www.home-assistant.io/docs/blueprint/schema/), [HA blueprint API](https://github.com/home-assistant/core/blob/2026.11.0/homeassistant/components/blueprint/websocket_api.py), [HA save/delete behavior](https://github.com/home-assistant/core/blob/2026.11.0/homeassistant/components/blueprint/models.py).
+
 ## Development and validation
 
 ```sh
@@ -97,8 +119,8 @@ python3 -m venv .venv
 .venv/bin/pip install -r requirements-dev.txt -e ./hassio_mcp
 .venv/bin/pytest -q
 .venv/bin/ruff check hassio_mcp/src tests scripts
-docker build --target compose -t hassio-mcp:0.3.0 hassio_mcp
-docker build -t hassio-mcp-haos:0.3.0 hassio_mcp
+docker build --target compose -t hassio-mcp:0.4.0 hassio_mcp
+docker build -t hassio-mcp-haos:0.4.0 hassio_mcp
 ```
 
 Tests cover actual MCP stdio initialization/discovery, HTTP/WebSocket authentication, read failures, write annotations, proposal expiry/digest/replay/concurrency, stale edits, YAML rollback/path restrictions, and query input boundaries. These use simulated HA responses; a live HAOS/tunnel/ChatGPT acceptance check is still required before enabling writes.

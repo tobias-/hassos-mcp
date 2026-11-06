@@ -59,6 +59,7 @@ def main():
             "tunnel_id": "CONTROL_PLANE_TUNNEL_ID",
             "openai_api_key": "CONTROL_PLANE_API_KEY",
             "allow_automation_writes": "ALLOW_AUTOMATION_WRITES",
+            "allow_blueprint_writes": "ALLOW_BLUEPRINT_WRITES",
             "influx_url": "INFLUX_URL",
             "influx_version": "INFLUX_VERSION",
             "influx_database": "INFLUX_DATABASE",

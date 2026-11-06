@@ -52,9 +52,19 @@ Blank = use HAOS automatic authentication.
 
 [Open Home Assistant profile](https://my.home-assistant.io/redirect/profile/) · [Home Assistant authentication help](https://www.home-assistant.io/docs/authentication/)
 
-## Automation changes
+## Automation and blueprint changes
 
 Reading values, history, automation configuration, and traces works with writes disabled. Enable editing only after ChatGPT is set to ask for confirmation every time it applies a change.
+
+### Allow explicitly accepted blueprint changes
+
+Configuration field: `allow_blueprint_writes`
+
+Keep off until ChatGPT is set to ask every time for apply_blueprint_change. Create, update, and delete each require review of the exact proposal and explicit acceptance. Updates can reload all consumers; deletion can break references. HAOS provides the config mount automatically. Compose needs the connected HA config mounted, which can be read-only for blueprint API writes.
+
+Default: off. Independent of automation editing permission.
+
+[Blueprint review and recovery](https://github.com/tobias-/hassos-mcp#blueprint-crud-and-acceptance) · [Home Assistant blueprint schema](https://www.home-assistant.io/docs/blueprint/schema/)
 
 ### Allow approved automation edits
 

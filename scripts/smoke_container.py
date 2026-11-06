@@ -28,10 +28,16 @@ async def main(images):
         ):
             await session.initialize()
             tools = {tool.name: tool for tool in (await session.list_tools()).tools}
-            assert len(tools) == 17
+            assert len(tools) == 22
+            assert tools["apply_blueprint_change"].annotations.destructiveHint
             assert tools["apply_automation_change"].annotations.destructiveHint
             result = await session.call_tool(
                 "apply_automation_change",
+                {"proposal_id": "test", "approved_digest": "test"},
+            )
+            assert result.isError and "disabled" in result.content[0].text
+            result = await session.call_tool(
+                "apply_blueprint_change",
                 {"proposal_id": "test", "approved_digest": "test"},
             )
             assert result.isError and "disabled" in result.content[0].text

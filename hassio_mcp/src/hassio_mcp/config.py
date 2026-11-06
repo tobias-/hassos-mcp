@@ -14,6 +14,7 @@ class Settings:
     config_dir: Path = Path("/homeassistant")
     yaml_files: tuple[str, ...] = ()
     writes_enabled: bool = False
+    blueprint_writes_enabled: bool = False
     ha_ca: str = ""
     ha_cert: str = ""
     ha_key: str = field(default="", repr=False)
@@ -36,6 +37,8 @@ class Settings:
             config_dir=Path(env.get("HA_CONFIG_DIR", "/homeassistant")),
             yaml_files=tuple(json.loads(env.get("HA_YAML_FILES", "[]"))),
             writes_enabled=env.get("ALLOW_AUTOMATION_WRITES", "false").lower()
+            == "true",
+            blueprint_writes_enabled=env.get("ALLOW_BLUEPRINT_WRITES", "false").lower()
             == "true",
             ha_ca=env.get("HA_CA_FILE", ""),
             ha_cert=env.get("HA_CLIENT_CERT_FILE", ""),

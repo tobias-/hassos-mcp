@@ -17,6 +17,7 @@ def test_supervisor_build_context_and_version():
     assert manifest["version"] == project["project"]["version"]
     assert manifest["slug"] == APP.name
     assert manifest["options"]["allow_automation_writes"] is False
+    assert manifest["options"]["allow_blueprint_writes"] is False
     assert "image" not in manifest  # Supervisor builds directly from this directory.
     assert "ports" not in manifest
     assert (
