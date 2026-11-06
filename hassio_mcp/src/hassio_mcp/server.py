@@ -54,7 +54,7 @@ def build_server(settings=None, ha=None):
     suggestions = Suggestions(settings)
     blueprints = Blueprints(settings, ha)
     automations = AutomationManagement(ha)
-    dependencies = Dependencies(ha)
+    dependencies = Dependencies(ha, settings)
     reviews = ReviewStore(settings)
     resources = Resources(ha, reviews)
     actions = Actions(ha, reviews)

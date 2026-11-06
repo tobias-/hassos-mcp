@@ -146,7 +146,7 @@ def validate_consumer_inputs(source, domain, consumers):
 class Blueprints:
     def __init__(self, settings, ha):
         self.settings, self.ha = settings, ha
-        self.dependencies = Dependencies(ha)
+        self.dependencies = Dependencies(ha, settings)
         self.root = settings.config_dir.absolute()
         settings.data_dir.mkdir(mode=0o700, parents=True, exist_ok=True)
         self.db_path = settings.data_dir / "blueprint_changes.sqlite3"

@@ -1,3 +1,9 @@
+# 0.11.2
+
+- Fix blueprint consumer inspection when Home Assistant returns expanded runtime configuration without the original blueprint reference.
+- Resolve original inputs through saved automation/script configuration IDs, including renamed script entities, with allowlisted automation YAML fallback.
+- Keep stale-reference and changed-input protections; explain unavailable source configuration instead of incorrectly reporting a changed dependency index.
+
 # 0.11.1
 
 - Add a read-only get_version tool reporting the running server's installed release version without contacting Home Assistant.

@@ -1,8 +1,10 @@
 """Read HA's dependency index and preserve exact blueprint consumer references."""
 
 import asyncio
+import json
 
-from .ha import entity
+from .ha import HAError, entity, identifier
+from .yaml_files import AutomationFiles
 
 ITEM_TYPES = (
     "entity",
@@ -21,8 +23,64 @@ ITEM_TYPES = (
 
 
 class Dependencies:
-    def __init__(self, ha):
+    def __init__(self, ha, settings=None):
         self.ha = ha
+        self.settings = settings or getattr(ha, "settings", None)
+
+    async def consumer_config(self, domain, target):
+        """Resolve saved inputs, which HA omits from expanded runtime config."""
+        target = entity(target, domain)
+        result = await self.ha.ws(domain + "/config", entity_id=target)
+        config = result.get("config", result)
+        if isinstance(config, dict) and "use_blueprint" in config:
+            return config
+
+        if domain == "automation":
+            resource_id = config.get("id") if isinstance(config, dict) else None
+            if resource_id is None:
+                state = await self.ha.request("GET", "/api/states/" + target)
+                resource_id = state.get("attributes", {}).get("id")
+        else:
+            # Entity IDs can be renamed independently of the script's config key.
+            entry = await self.ha.ws("config/entity_registry/get", entity_id=target)
+            resource_id = entry.get("unique_id") if entry else None
+
+        if resource_id is None:
+            raise ValueError(
+                f"Cannot resolve the saved configuration ID for {target}; "
+                "expanded runtime configuration does not contain blueprint inputs"
+            )
+        resource_id = identifier(str(resource_id))
+        try:
+            saved = await self.ha.request(
+                "GET", f"/api/config/{domain}/config/{resource_id}"
+            )
+        except HAError as exc:
+            if exc.status != 404:
+                raise
+            saved = None
+        if saved is not None:
+            return saved
+
+        if domain == "automation" and self.settings:
+            files = AutomationFiles(self.settings)
+            matches = []
+            for name in self.settings.yaml_files:
+                _, _, items = files.load(name)
+                matches.extend(
+                    item for item in items if str(item.get("id")) == resource_id
+                )
+            if len(matches) > 1:
+                raise ValueError(f"Ambiguous saved automation ID for {target}")
+            if matches:
+                return matches[0]
+        raise ValueError(
+            f"Saved blueprint inputs for {target} are unavailable through HA's "
+            "UI configuration API. For YAML automations, mount the HA configuration "
+            "directory and add the source file to yaml_files (HA_YAML_FILES in Compose). "
+            "YAML-only script inputs cannot currently be resolved. "
+            "Blueprint changes remain blocked until the original inputs can be read."
+        )
 
     async def related(self, item_type, item_id):
         if item_type not in ITEM_TYPES or not item_id or len(item_id) > 240:
@@ -59,15 +117,23 @@ class Dependencies:
 
         async def inspect(target):
             async with semaphore:
-                config = await self.ha.ws(
-                    domain + "/config", entity_id=entity(target, domain)
-                )
-            config = config.get("config", config)
-            reference = config.get("use_blueprint")
+                config = await self.consumer_config(domain, target)
+            reference = (
+                config.get("use_blueprint") if isinstance(config, dict) else None
+            )
             if not isinstance(reference, dict) or reference.get("path") != path:
                 raise ValueError(
-                    "Blueprint dependency index changed; inspect and retry the proposal"
+                    f"Saved blueprint reference for {target} differs from HA's "
+                    "loaded dependency index; inspect the saved configuration and "
+                    "reload the affected domain before retrying"
                 )
+            try:
+                reference = json.loads(json.dumps(reference, allow_nan=False))
+            except (TypeError, ValueError):
+                raise ValueError(
+                    f"Blueprint inputs for {target} contain unresolved YAML tags "
+                    "or non-JSON values; exact inputs cannot be verified"
+                ) from None
             return {"entity_id": target, "use_blueprint": reference}
 
         return {
