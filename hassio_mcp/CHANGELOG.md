@@ -1,3 +1,9 @@
+# 0.3.0
+
+- Add a persistent suggestion box for LLM feature requests and observed bugs.
+- Add submit_suggestion and paginated list_suggestions tools, usable with automation writes disabled and Home Assistant offline.
+- Retain reports in private SQLite storage across restarts and updates, deduplicate exact repeats, and redact known configured credentials.
+
 # 0.2.0
 
 - Add a setup Web UI with direct links and step-by-step guidance for every setting.

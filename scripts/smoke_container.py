@@ -28,15 +28,26 @@ async def main(images):
         ):
             await session.initialize()
             tools = {tool.name: tool for tool in (await session.list_tools()).tools}
-            assert len(tools) == 15
+            assert len(tools) == 17
             assert tools["apply_automation_change"].annotations.destructiveHint
             result = await session.call_tool(
                 "apply_automation_change",
                 {"proposal_id": "test", "approved_digest": "test"},
             )
             assert result.isError and "disabled" in result.content[0].text
+            result = await session.call_tool(
+                "submit_suggestion",
+                {
+                    "kind": "bug",
+                    "title": "Smoke test",
+                    "details": "Temporary container persistence check",
+                },
+            )
+            assert not result.isError
+            result = await session.call_tool("list_suggestions", {})
+            assert not result.isError and "Smoke test" in result.content[0].text
             print(
-                f"{image}: MCP initialization, tool discovery, and disabled-write guard passed"
+                f"{image}: MCP initialization, discovery, suggestion box, and disabled-write guard passed"
             )
 
 

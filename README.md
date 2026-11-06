@@ -9,6 +9,7 @@ A private MCP server for ChatGPT, running as a local HAOS app/add-on or Docker C
 - Read InfluxDB 1.x or 2.x history through bounded queries, including aggregates.
 - Read loaded UI/YAML/blueprint automation configuration, stored execution traces, and error logs.
 - Propose and review exact changes, then create/edit UI automations or edit existing automations in explicitly allowlisted YAML files.
+- Save and review persistent suggestions for missing capabilities and observed bugs.
 
 No generic service-call, delete, toggle, or manually-trigger-automation tool is exposed. Saving an automation can activate its triggers, so apply is marked destructive and non-read-only.
 
@@ -65,6 +66,18 @@ For the Compose deployment, local tunnel readiness can be inspected without publ
 docker compose exec hassio-mcp python -c 'import urllib.request; print(urllib.request.urlopen("http://127.0.0.1:8080/readyz").read().decode())'
 ```
 
+## Persistent suggestion box
+
+The LLM can call `submit_suggestion` when a capability is missing or a tool appears broken. Reports have a kind (`feature_request` or `bug`), title, details, optional affected tool, server-assigned ID, and UTC timestamp. Server instructions encourage actionable reports with a use case or expected/actual behavior and reproduction steps. They also tell the LLM to check existing tools before reporting a missing capability. Reporting is advisory; it does not fix anything or publish GitHub issues.
+
+Ask **“Show me the saved suggestions and bug reports”** to use `list_suggestions`. It returns oldest first, optionally filtered by kind, with `next_after_id` for further pages. Exact repeat submissions return the original ID. Reports are retained without automatic expiry or deletion, and are unverified caller observations.
+
+The log is a separate SQLite file at `/data/state/suggestions.sqlite3` in both HAOS and Compose (or `$DATA_DIR/suggestions.sqlite3` with a custom data directory). Committed reports survive MCP restarts, container replacement, and add-on upgrades as long as the persistent data is retained. Include the add-on data or Compose `mcp-data` volume in backups; uninstalling the add-on or deleting its data volume can remove reports. This is independent of the rotating container log. The file can also be inspected offline with SQLite: `SELECT id, created_at, kind, title, details, tool_name FROM suggestions ORDER BY id;`.
+
+Both tools work with automation writes disabled and HA unavailable. Submitting is correctly marked as a local write, so client permission settings still apply. Reports should omit credentials and unnecessary household data; the server additionally redacts known configured tokens/passwords, but cannot recognize every possible secret in free text. Nothing automatically copies raw HA logs or conversations into the suggestion box.
+
+After upgrading to 0.3.0, refresh the plugin's tools in ChatGPT to discover the two new tools.
+
 ## YAML editing and recovery limits
 
 UI-managed edits go through Home Assistant's config API, which validates and saves `automations.yaml` and schedules a reload. Direct file editing accepts automation-list files or packages with a top-level `automation` list, requires an existing unique `id`, preserves tags/comments, and shows the complete file diff. It does not expand arbitrary includes or expose `secrets.yaml`. For blueprints, edit the automation's `use_blueprint` inputs, not the blueprint template.
@@ -84,8 +97,8 @@ python3 -m venv .venv
 .venv/bin/pip install -r requirements-dev.txt -e ./hassio_mcp
 .venv/bin/pytest -q
 .venv/bin/ruff check hassio_mcp/src tests scripts
-docker build --target compose -t hassio-mcp:0.2.0 hassio_mcp
-docker build -t hassio-mcp-haos:0.2.0 hassio_mcp
+docker build --target compose -t hassio-mcp:0.3.0 hassio_mcp
+docker build -t hassio-mcp-haos:0.3.0 hassio_mcp
 ```
 
 Tests cover actual MCP stdio initialization/discovery, HTTP/WebSocket authentication, read failures, write annotations, proposal expiry/digest/replay/concurrency, stale edits, YAML rollback/path restrictions, and query input boundaries. These use simulated HA responses; a live HAOS/tunnel/ChatGPT acceptance check is still required before enabling writes.
