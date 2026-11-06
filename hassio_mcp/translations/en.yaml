@@ -27,6 +27,12 @@ configuration:
       deletion can break references. HAOS provides the config mount automatically. Compose needs the connected HA
       config mounted, which can be read-only for blueprint API writes. Default: off. Independent of automation editing
       permission. Setup links: open Web UI or the Documentation tab. https://github.com/tobias-/hassos-mcp#blueprint-crud-and-acceptance'
+  allow_management_writes:
+    name: Allow accepted management changes
+    description: 'Enables reviewed scripts/scenes and other management apply tools. Every write requires explicit
+      acceptance of the exact proposal. Keep all management apply tools on ask every time in ChatGPT. The five direct
+      automation operations remain independent of this switch. Default: off. Configure client confirmation before
+      enabling. Setup links: open Web UI or the Documentation tab. https://github.com/tobias-/hassos-mcp#access-and-approval-model'
   allow_automation_writes:
     name: Allow accepted automation configuration changes
     description: 'Controls configuration create, edit, and delete only. First set ChatGPT to ask every time for

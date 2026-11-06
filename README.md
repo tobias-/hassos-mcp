@@ -158,3 +158,7 @@ Protocol references: [Secure MCP Tunnel](https://developers.openai.com/api/docs/
 ## Reviewed rollback
 
 Use `propose_automation_rollback` or `propose_blueprint_rollback` with the original proposal ID. Each creates a fresh proposal against the current resource, with a new diff, digest, and impact snapshot. It never restores automatically. Review and explicitly accept it, then call the corresponding apply tool. Rollback of a create proposes deletion; rollback of a delete proposes recreation. Automation YAML rollback preserves unrelated entries added or edited since the original change.
+
+## Script and scene configuration
+
+Use `list_resources`, `get_resource_config`, and `propose_resource_change` for script/scene configuration CRUD. Native edits target UI-managed files by config ID (script slug or scene ID). YAML package resources are managed through explicitly allowlisted configuration files. Every modification requires `apply_resource_change` with the exact accepted digest and client confirmation. Enable `allow_management_writes` only after setting all management apply tools to ask every time. `management_change_status` preserves backups and uncertain outcomes in `/data/state/management_changes.sqlite3`; `propose_resource_rollback` prepares a separately reviewed restoration.

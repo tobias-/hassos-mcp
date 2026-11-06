@@ -15,6 +15,7 @@ class Settings:
     yaml_files: tuple[str, ...] = ()
     writes_enabled: bool = False
     blueprint_writes_enabled: bool = False
+    management_writes_enabled: bool = False
     ha_ca: str = ""
     ha_cert: str = ""
     ha_key: str = field(default="", repr=False)
@@ -39,6 +40,10 @@ class Settings:
             writes_enabled=env.get("ALLOW_AUTOMATION_WRITES", "false").lower()
             == "true",
             blueprint_writes_enabled=env.get("ALLOW_BLUEPRINT_WRITES", "false").lower()
+            == "true",
+            management_writes_enabled=env.get(
+                "ALLOW_MANAGEMENT_WRITES", "false"
+            ).lower()
             == "true",
             ha_ca=env.get("HA_CA_FILE", ""),
             ha_cert=env.get("HA_CLIENT_CERT_FILE", ""),

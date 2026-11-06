@@ -1,3 +1,8 @@
+# 0.8.0
+
+- Add reviewed native script/scene configuration CRUD with dependency checks, verification and rollback proposals.
+- Add a separate management write switch and persistent management proposal status.
+
 # 0.7.0
 
 - Add explicit rollback proposals for blueprint and automation backups.

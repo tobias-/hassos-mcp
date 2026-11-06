@@ -60,6 +60,7 @@ def main():
             "openai_api_key": "CONTROL_PLANE_API_KEY",
             "allow_automation_writes": "ALLOW_AUTOMATION_WRITES",
             "allow_blueprint_writes": "ALLOW_BLUEPRINT_WRITES",
+            "allow_management_writes": "ALLOW_MANAGEMENT_WRITES",
             "influx_url": "INFLUX_URL",
             "influx_version": "INFLUX_VERSION",
             "influx_database": "INFLUX_DATABASE",

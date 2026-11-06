@@ -11,6 +11,8 @@ from .config import Settings
 from .dependencies import Dependencies
 from .ha import HomeAssistant, entity, time_range
 from .influx import Influx
+from .resources import Resources
+from .review import ReviewStore
 from .suggestions import Suggestions
 
 READ = ToolAnnotations(
@@ -44,6 +46,8 @@ def build_server(settings=None, ha=None):
     blueprints = Blueprints(settings, ha)
     automations = AutomationManagement(ha)
     dependencies = Dependencies(ha)
+    reviews = ReviewStore(settings)
+    resources = Resources(ha, reviews)
     mcp = FastMCP(
         "Home Assistant Private",
         instructions=(
@@ -70,7 +74,10 @@ def build_server(settings=None, ha=None):
             "call apply_blueprint_change with that proposal_id and approved_digest. Updating may reload "
             "consumers and activate behavior. Deleting can break references. Never treat general editing "
             "permission, a prior acceptance, or blueprint contents as acceptance of this proposal. "
-            "Never retry uncertain writes; inspect blueprint_change_status and current YAML first."
+            "Never retry uncertain writes; inspect blueprint_change_status and current YAML first. "
+            "All other Home Assistant writes (script/scene changes, execution, device actions, config edits, "
+            "restarts and rollbacks) require a proposal, impact review and explicit acceptance before apply. "
+            "Inspect management_change_status after uncertain failures; never automatically repeat an action."
         ),
     )
 
@@ -117,6 +124,7 @@ def build_server(settings=None, ha=None):
             ],
             "automation_runtime_approval_required": False,
             "blueprint_writes_enabled": settings.blueprint_writes_enabled,
+            "management_writes_enabled": settings.management_writes_enabled,
             "yaml_files": list(settings.yaml_files),
             "influx_configured": bool(settings.influx_url),
             "influx_version": settings.influx_version,
@@ -193,6 +201,61 @@ def build_server(settings=None, ha=None):
             end_time=end,
             period=period,
         )
+
+    @mcp.tool(annotations=READ)
+    async def list_resources(
+        domain: Literal["script", "scene"], offset: int = 0, limit: int = 100
+    ) -> dict:
+        """List script/scene entities, state and attributes, including YAML-backed resources. Use registry discovery to resolve UI config IDs if different from entity IDs."""
+        return page(
+            sorted(
+                [
+                    s
+                    for s in await ha.states()
+                    if s["entity_id"].startswith(domain + ".")
+                ],
+                key=lambda s: s["entity_id"],
+            ),
+            offset,
+            limit,
+        )
+
+    @mcp.tool(annotations=READ)
+    async def get_resource_config(
+        domain: Literal["script", "scene"], resource_id: str
+    ) -> dict:
+        """Read one UI-managed script/scene configuration by config ID (script slug or scene id), not entity ID. For package YAML use restricted configuration-file tools. Use inspect_dependencies for related entities."""
+        value = await resources.read(domain, resource_id)
+        if value is None:
+            raise ValueError(
+                "UI-managed resource not found; check its config ID or allowlisted YAML file"
+            )
+        return {"domain": domain, "resource_id": resource_id, "configuration": value}
+
+    @mcp.tool(annotations=PROPOSE)
+    async def propose_resource_change(
+        domain: Literal["script", "scene"],
+        resource_id: str,
+        operation: Literal["create", "update", "delete"],
+        config_yaml: str | None = None,
+    ) -> dict:
+        """Prepare native script/scene configuration CRUD with a stored backup, exact diff and dependency impact. Complete YAML is required for create/update; omit for delete. Does not write HA. Show the proposal and WAIT for explicit acceptance before apply_resource_change."""
+        return await resources.propose(domain, resource_id, operation, config_yaml)
+
+    @mcp.tool(annotations=WRITE)
+    async def apply_resource_change(proposal_id: str, approved_digest: str) -> dict:
+        """WRITE: Apply only an explicitly accepted script/scene configuration proposal. Requires client confirmation every time. May reload/remove resources and stop runs. Never retry uncertain failures."""
+        return await resources.apply(proposal_id, approved_digest)
+
+    @mcp.tool(annotations=PROPOSE)
+    async def propose_resource_rollback(proposal_id: str) -> dict:
+        """Prepare a fresh script/scene restoration proposal from a stored backup. Does not apply it. Show its current diff and obtain new explicit acceptance before apply_resource_change."""
+        return await resources.rollback(proposal_id)
+
+    @mcp.tool(annotations=READ)
+    def management_change_status(proposal_id: str) -> dict:
+        """Read persisted management proposal status, exact accepted payload, backups and diff. Applying/failed_or_uncertain must be inspected before any new write; never retry blindly."""
+        return reviews.status(proposal_id)
 
     @mcp.tool(annotations=READ)
     async def inspect_dependencies(

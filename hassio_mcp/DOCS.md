@@ -66,6 +66,16 @@ Default: off. Independent of automation editing permission.
 
 [Blueprint review and recovery](https://github.com/tobias-/hassos-mcp#blueprint-crud-and-acceptance) · [Home Assistant blueprint schema](https://www.home-assistant.io/docs/blueprint/schema/)
 
+### Allow accepted management changes
+
+Configuration field: `allow_management_writes`
+
+Enables reviewed scripts/scenes and other management apply tools. Every write requires explicit acceptance of the exact proposal. Keep all management apply tools on ask every time in ChatGPT. The five direct automation operations remain independent of this switch.
+
+Default: off. Configure client confirmation before enabling.
+
+[Management and approval workflow](https://github.com/tobias-/hassos-mcp#access-and-approval-model)
+
 ### Allow accepted automation configuration changes
 
 Configuration field: `allow_automation_writes`

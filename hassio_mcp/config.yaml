@@ -1,5 +1,5 @@
 name: Home Assistant Private MCP
-version: "0.7.0"
+version: "0.8.0"
 slug: hassio_mcp
 url: https://github.com/tobias-/hassos-mcp
 description: Private ChatGPT access to states, history, traces and reviewed automation edits
@@ -22,6 +22,7 @@ options:
   ha_token: ""
   allow_automation_writes: false
   allow_blueprint_writes: false
+  allow_management_writes: false
   yaml_files: []
   influx_url: ""
   influx_version: "1"
@@ -38,6 +39,7 @@ schema:
   ha_token: password
   allow_automation_writes: bool
   allow_blueprint_writes: bool
+  allow_management_writes: bool
   yaml_files:
     - str
   influx_url: str

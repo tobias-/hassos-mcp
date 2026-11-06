@@ -105,6 +105,19 @@ GROUPS = [
                 ],
             },
             {
+                "key": "allow_management_writes",
+                "name": "Allow accepted management changes",
+                "required": False,
+                "help": "Enables reviewed scripts/scenes and other management apply tools. Every write requires explicit acceptance of the exact proposal. Keep all management apply tools on ask every time in ChatGPT. The five direct automation operations remain independent of this switch.",
+                "example": "Default: off. Configure client confirmation before enabling.",
+                "links": [
+                    (
+                        "Management and approval workflow",
+                        "https://github.com/tobias-/hassos-mcp#access-and-approval-model",
+                    )
+                ],
+            },
+            {
                 "key": "allow_automation_writes",
                 "name": "Allow accepted automation configuration changes",
                 "required": False,
