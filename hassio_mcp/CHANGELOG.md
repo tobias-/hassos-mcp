@@ -1,3 +1,9 @@
+# 0.9.0
+
+- Discover entity/device/area/integration metadata and supported service schemas.
+- Add availability diagnostics and read-only full configuration validation.
+- Exclude config-entry data/options/credentials from discovery responses.
+
 # 0.8.0
 
 - Add reviewed native script/scene configuration CRUD with dependency checks, verification and rollback proposals.

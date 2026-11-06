@@ -9,6 +9,7 @@ from .blueprints import Blueprints
 from .changes import Changes
 from .config import Settings
 from .dependencies import Dependencies
+from .discovery import discover
 from .ha import HomeAssistant, entity, time_range
 from .influx import Influx
 from .resources import Resources
@@ -201,6 +202,50 @@ def build_server(settings=None, ha=None):
             end_time=end,
             period=period,
         )
+
+    @mcp.tool(annotations=READ)
+    async def discover_home_assistant(
+        kind: Literal["entities", "devices", "areas", "integrations", "services"],
+        offset: int = 0,
+        limit: int = 100,
+    ) -> dict:
+        """Read registry metadata or supported service schemas. Integration settings/credentials are excluded. Entity rows link config IDs, devices, areas and integrations; get_state reads availability and supported_features. Follow pagination."""
+        return page(await discover(ha, kind), offset, limit)
+
+    @mcp.tool(annotations=READ)
+    async def validate_configuration() -> dict:
+        """Validate current Home Assistant configuration without changing/reloading it. Read-only diagnostic even though HA uses POST for the check endpoint."""
+        return await ha.check_config()
+
+    @mcp.tool(annotations=READ)
+    async def diagnose_entities(entity_ids: list[str] | None = None) -> dict:
+        """Read availability/unknown states and disabled registry entries. Optional explicit entity IDs also identify missing entities. Does not change or repair anything; use history/logs/dependencies to investigate causes."""
+        if entity_ids is not None and not 1 <= len(entity_ids) <= 100:
+            raise ValueError(
+                "Select 1–100 entity IDs or omit for all availability problems"
+            )
+        selected = {entity(item) for item in entity_ids} if entity_ids else None
+        states = {item["entity_id"]: item for item in await ha.states()}
+        registry = await discover(ha, "entities")
+        problems = [
+            value
+            for key, value in states.items()
+            if (selected is None or key in selected)
+            and value.get("state") in ("unknown", "unavailable")
+        ]
+        disabled = [
+            row
+            for row in registry
+            if row.get("disabled_by")
+            and (selected is None or row["entity_id"] in selected)
+        ]
+        return {
+            "unavailable_or_unknown": problems[:500],
+            "disabled": disabled[:500],
+            "missing": sorted(selected - states.keys()) if selected else [],
+            "truncated": len(problems) > 500 or len(disabled) > 500,
+            "note": "Missing state may mean disabled/unloaded; these observations do not establish a cause.",
+        }
 
     @mcp.tool(annotations=READ)
     async def list_resources(

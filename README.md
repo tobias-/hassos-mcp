@@ -162,3 +162,7 @@ Use `propose_automation_rollback` or `propose_blueprint_rollback` with the origi
 ## Script and scene configuration
 
 Use `list_resources`, `get_resource_config`, and `propose_resource_change` for script/scene configuration CRUD. Native edits target UI-managed files by config ID (script slug or scene ID). YAML package resources are managed through explicitly allowlisted configuration files. Every modification requires `apply_resource_change` with the exact accepted digest and client confirmation. Enable `allow_management_writes` only after setting all management apply tools to ask every time. `management_change_status` preserves backups and uncertain outcomes in `/data/state/management_changes.sqlite3`; `propose_resource_rollback` prepares a separately reviewed restoration.
+
+## Discovery and diagnostics
+
+`discover_home_assistant` lists entity, device, area and integration metadata or service schemas. Integration data/options/credentials are omitted. Use entity registry `unique_id` to resolve config IDs and registry links to identify devices, areas, and integrations. `diagnose_entities` reports unavailable/unknown/disabled entities and requested IDs without states; `validate_configuration` checks the current HA configuration without modifying or reloading it. Existing logs, trace, history, statistics and dependency tools provide further evidence.
