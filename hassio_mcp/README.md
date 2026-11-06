@@ -8,5 +8,5 @@ Install this app from the repository's Home Assistant app/add-on store entry.
 It builds on your HAOS machine for amd64 or aarch64. It does not publish a network port.
 
 See [DOCS.md](DOCS.md) for setup and
-[the repository README](https://github.com/tobias-/hassio-mcp#readme)
+[the repository README](https://github.com/tobias-/hassos-mcp#readme)
 for the access model, confirmation requirements, and recovery limitations.

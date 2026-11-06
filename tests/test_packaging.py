@@ -21,7 +21,7 @@ def test_supervisor_build_context_and_version():
     assert "ports" not in manifest
     assert (
         yaml.load((ROOT / "repository.yaml").read_text())["url"]
-        == "https://github.com/tobias-/hassio-mcp"
+        == "https://github.com/tobias-/hassos-mcp"
     )
     for path in (
         "Dockerfile",

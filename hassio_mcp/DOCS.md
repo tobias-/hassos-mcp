@@ -50,4 +50,4 @@ After an uncertain write failure, use `automation_change_status` and inspect the
 current HA configuration before making a new proposal. Do not blindly retry.
 
 Full installation, recovery, and development documentation:
-https://github.com/tobias-/hassio-mcp#readme
+https://github.com/tobias-/hassos-mcp#readme

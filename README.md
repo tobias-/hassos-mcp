@@ -22,9 +22,9 @@ Proposals expire after 30 minutes. Before/after configurations and status are pe
 
 ## HAOS installation from GitHub (preferred)
 
-[![Add this repository to Home Assistant](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Ftobias-%2Fhassio-mcp)
+[![Add this repository to Home Assistant](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Ftobias-%2Fhassos-mcp)
 
-Repository URL: `https://github.com/tobias-/hassio-mcp`
+Repository URL: `https://github.com/tobias-/hassos-mcp`
 
 1. Open **Settings → Apps → Install app → ⋮ → Repositories** (called **Add-ons → Add-on Store** on older HAOS versions), add the repository URL, and install **Home Assistant Private MCP**. Use the app/add-on store; HACS does not install container apps.
 2. HAOS builds the app from the self-contained `hassio_mcp/` directory. There is no container registry login or separate image publication step. Builds support `amd64` and `aarch64`; only the development host's architecture has been container-tested locally.
