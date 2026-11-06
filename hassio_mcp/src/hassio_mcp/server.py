@@ -264,6 +264,11 @@ def build_server(settings=None, ha=None):
         """Read blueprint proposal status, digest, diff and before/after YAML backup. Interrupted/uncertain writes must be inspected before any fresh proposal. Does not apply or retry."""
         return blueprints.status(proposal_id)
 
+    @mcp.tool(annotations=PROPOSE)
+    async def propose_blueprint_rollback(proposal_id: str) -> dict:
+        """Prepare a NEW proposal restoring the blueprint backup from a prior applied/uncertain change. Does not modify HA. Read current content, show the returned diff/impact, and require fresh explicit acceptance before apply_blueprint_change. Prior approval never authorizes rollback."""
+        return await blueprints.propose_rollback(proposal_id)
+
     @mcp.tool(annotations=READ)
     async def list_automations(
         search: str = "", offset: int = 0, limit: int = 100
@@ -394,6 +399,11 @@ def build_server(settings=None, ha=None):
     def automation_change_status(proposal_id: str) -> dict:
         """Read a proposal's status, digest and reviewed diff, including uncertain failures. Does not retry or apply."""
         return changes.status(proposal_id)
+
+    @mcp.tool(annotations=PROPOSE)
+    async def propose_automation_rollback(proposal_id: str) -> dict:
+        """Prepare a NEW proposal restoring one automation from an applied/uncertain change backup. Preserve unrelated current YAML entries. Show the fresh diff and effects, WAIT for explicit acceptance, then use apply_automation_change. Does not restore automatically."""
+        return await changes.propose_rollback(proposal_id)
 
     return mcp
 

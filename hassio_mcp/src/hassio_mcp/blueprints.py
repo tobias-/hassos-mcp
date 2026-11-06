@@ -363,3 +363,23 @@ class Blueprints:
             raise ValueError("Unknown blueprint proposal")
         payload = json.loads(row[2])
         return {"status": row[1], "created": row[0], **payload}
+
+    async def propose_rollback(self, proposal_id):
+        original = self.status(proposal_id)
+        if original["status"] == "pending":
+            raise ValueError(
+                "This proposal has not been applied; there is nothing to roll back"
+            )
+        domain, path = original["domain"], original["path"]
+        current = self.read(domain, path)
+        before = original["before"]
+        if current == before:
+            raise ValueError("Blueprint already matches the backup")
+        operation = (
+            "delete" if before is None else "create" if current is None else "update"
+        )
+        return {
+            **await self.propose(operation, domain, path, before),
+            "restores_proposal_id": proposal_id,
+            "rollback_note": "This is a NEW proposal against current content. Show its diff and impact and obtain fresh acceptance; the old approval never authorizes restoration.",
+        }

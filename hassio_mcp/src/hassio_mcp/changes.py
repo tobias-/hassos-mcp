@@ -10,7 +10,13 @@ from contextlib import contextmanager
 
 from .dependencies import Dependencies
 from .ha import identifier
-from .yaml_files import AutomationFiles, atomic_write, dump, parse_automation
+from .yaml_files import (
+    AutomationFiles,
+    atomic_write,
+    dump,
+    parse_automation,
+    yaml_engine,
+)
 
 
 def digest(value):
@@ -271,4 +277,49 @@ class Changes:
             "source_file": data["source_file"],
             "diff": data["diff"],
             "digest": data["digest"],
+        }
+
+    async def propose_rollback(self, proposal_id):
+        with self.db() as db:
+            row = db.execute(
+                "SELECT status,payload FROM proposals WHERE id=?", (proposal_id,)
+            ).fetchone()
+        if not row:
+            raise ValueError("Unknown automation proposal")
+        if row[0] == "pending":
+            raise ValueError(
+                "This proposal has not been applied; there is nothing to roll back"
+            )
+        original = json.loads(row[1])
+        automation_id, source_file = original["automation_id"], original["source_file"]
+        if source_file:
+            document = yaml_engine().load(original["before"])
+            old_items = (
+                document if isinstance(document, list) else document["automation"]
+            )
+            before = next(
+                (item for item in old_items if str(item.get("id")) == automation_id),
+                None,
+            )
+            _, _, items = self.files.load(source_file)
+            matches = [item for item in items if str(item.get("id")) == automation_id]
+            if len(matches) > 1:
+                raise ValueError("Duplicate automation IDs in current file")
+            current = matches[0] if matches else None
+        else:
+            before = json.loads(original["before"])
+            current = await self.ha.automation(automation_id)
+        if dump(current) == dump(before):
+            raise ValueError("Automation already matches the backup")
+        result = await self.propose(
+            automation_id,
+            dump(before) if before is not None else None,
+            source_file,
+            create=current is None,
+            delete=before is None,
+        )
+        return {
+            **result,
+            "restores_proposal_id": proposal_id,
+            "rollback_note": "Fresh acceptance is required. This restores only the selected automation and preserves other current YAML entries; review the entire new diff.",
         }

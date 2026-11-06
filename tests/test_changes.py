@@ -257,3 +257,36 @@ async def test_yaml_create_rejects_id_collisions_before_proposal_and_apply(fixtu
         await changes.apply(proposal["proposal_id"], proposal["digest"])
     assert path.read_text() == "[]\n"
     assert ha.reloads == 0
+
+
+async def test_rollback_is_new_reviewed_proposal_and_recreates_deleted_automation(
+    fixture,
+):
+    changes, ha, _ = fixture
+    original = await changes.propose("test", None, delete=True)
+    with pytest.raises(ValueError, match="not been applied"):
+        await changes.propose_rollback(original["proposal_id"])
+    await changes.apply(original["proposal_id"], original["digest"])
+    rollback = await changes.propose_rollback(original["proposal_id"])
+    assert rollback["operation"] == "create" and ha.current is None
+    with pytest.raises(ValueError, match="digest"):
+        await changes.apply(rollback["proposal_id"], original["digest"])
+    await changes.apply(rollback["proposal_id"], rollback["digest"])
+    assert ha.current == OLD
+
+
+async def test_yaml_rollback_preserves_unrelated_later_changes(fixture):
+    changes, ha, settings = fixture
+    path = settings.config_dir / "package.yaml"
+    path.write_text("- id: test\n  alias: Before\n  triggers: []\n  actions: []\n")
+    original = await changes.propose("test", NEW, "package.yaml")
+    await changes.apply(original["proposal_id"], original["digest"])
+    path.write_text(
+        path.read_text() + "- id: unrelated\n  triggers: []\n  actions: []\n"
+    )
+    rollback = await changes.propose_rollback(original["proposal_id"])
+    assert "alias: After" in path.read_text()
+    ha.results = ["valid", "valid"]
+    await changes.apply(rollback["proposal_id"], rollback["digest"])
+    assert "alias: Before" in path.read_text()
+    assert "id: unrelated" in path.read_text()

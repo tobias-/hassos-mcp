@@ -317,3 +317,18 @@ def test_configuration_toggle_is_independent(monkeypatch):
     assert not Settings.from_env().blueprint_writes_enabled
     monkeypatch.setenv("ALLOW_BLUEPRINT_WRITES", "true")
     assert Settings.from_env().blueprint_writes_enabled
+
+
+async def test_blueprint_rollback_requires_new_accepted_proposal(fixture):
+    box, _, _, file = fixture
+    original = await box.propose("update", "automation", PATH, NEW)
+    with pytest.raises(ValueError, match="not been applied"):
+        await box.propose_rollback(original["proposal_id"])
+    await box.apply(original["proposal_id"], original["digest"])
+    rollback = await box.propose_rollback(original["proposal_id"])
+    assert file.read_text() == NEW
+    assert rollback["proposal_id"] != original["proposal_id"]
+    with pytest.raises(ValueError, match="digest"):
+        await box.apply(rollback["proposal_id"], original["digest"])
+    await box.apply(rollback["proposal_id"], rollback["digest"])
+    assert file.read_text() == OLD

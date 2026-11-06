@@ -1,3 +1,9 @@
+# 0.7.0
+
+- Add explicit rollback proposals for blueprint and automation backups.
+- Require fresh acceptance and current-state checks for every restoration.
+- Restore only the selected YAML automation while preserving unrelated later edits.
+
 # 0.6.0
 
 - Add dependency inspection and blueprint consumer/input snapshots to proposals.

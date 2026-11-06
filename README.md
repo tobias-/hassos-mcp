@@ -154,3 +154,7 @@ Protocol references: [Secure MCP Tunnel](https://developers.openai.com/api/docs/
 ## Dependency inspection
 
 `inspect_dependencies` reads HA’s related-item index for entities, devices, areas, integrations, automations, scripts, scenes, and automation/script blueprints. `blueprint_consumers` adds each loaded consumer’s exact `use_blueprint` path and inputs. Configuration proposals include this impact information. Review it alongside the diff. Failed dependency reads block proposals; an empty or partial index is not proof of no dependents. Blueprint checks reject undefined `!input` references and missing consumer inputs/defaults, including input sections. Conditional input visibility is conservatively treated as requiring a supplied value or default; full HA validation still occurs at save time.
+
+## Reviewed rollback
+
+Use `propose_automation_rollback` or `propose_blueprint_rollback` with the original proposal ID. Each creates a fresh proposal against the current resource, with a new diff, digest, and impact snapshot. It never restores automatically. Review and explicitly accept it, then call the corresponding apply tool. Rollback of a create proposes deletion; rollback of a delete proposes recreation. Automation YAML rollback preserves unrelated entries added or edited since the original change.
