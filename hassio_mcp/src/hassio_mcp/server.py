@@ -4,6 +4,7 @@ from typing import Literal
 from mcp.server.fastmcp import FastMCP
 from mcp.types import ToolAnnotations
 
+from .actions import Actions
 from .automation_management import AutomationManagement
 from .blueprints import Blueprints
 from .changes import Changes
@@ -49,6 +50,7 @@ def build_server(settings=None, ha=None):
     dependencies = Dependencies(ha)
     reviews = ReviewStore(settings)
     resources = Resources(ha, reviews)
+    actions = Actions(ha, reviews)
     mcp = FastMCP(
         "Home Assistant Private",
         instructions=(
@@ -202,6 +204,28 @@ def build_server(settings=None, ha=None):
             end_time=end,
             period=period,
         )
+
+    @mcp.tool(annotations=PROPOSE)
+    async def propose_service_action(
+        domain: str,
+        service: str,
+        entity_ids: list[str] | None = None,
+        data: dict | None = None,
+    ) -> dict:
+        """Propose a registered HA service/action with exact entities, arguments, schema and dependency impact. Covers device controls, script.turn_on, scene.turn_on, script/scene reload, and homeassistant.restart. Does NOT execute. Show effects and require explicit acceptance before apply_service_action. Automation enable/disable/trigger/reload use their direct tools instead. Use explicit entity_ids; area/device-wide targets are not accepted."""
+        return await actions.propose(domain, service, entity_ids, data)
+
+    @mcp.tool(
+        annotations=ToolAnnotations(
+            readOnlyHint=False,
+            destructiveHint=True,
+            idempotentHint=False,
+            openWorldHint=True,
+        )
+    )
+    async def apply_service_action(proposal_id: str, approved_digest: str) -> dict:
+        """WRITE: Execute exactly one explicitly accepted HA action proposal. Client confirmation is required every time, including script execution, scene activation, reload and restart. May affect physical devices or external services. No automatic retry or rollback; inspect management_change_status after uncertainty."""
+        return await actions.apply(proposal_id, approved_digest)
 
     @mcp.tool(annotations=READ)
     async def discover_home_assistant(

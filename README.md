@@ -166,3 +166,9 @@ Use `list_resources`, `get_resource_config`, and `propose_resource_change` for s
 ## Discovery and diagnostics
 
 `discover_home_assistant` lists entity, device, area and integration metadata or service schemas. Integration data/options/credentials are omitted. Use entity registry `unique_id` to resolve config IDs and registry links to identify devices, areas, and integrations. `diagnose_entities` reports unavailable/unknown/disabled entities and requested IDs without states; `validate_configuration` checks the current HA configuration without modifying or reloading it. Existing logs, trace, history, statistics and dependency tools provide further evidence.
+
+## Accepted actions and device control
+
+Use `discover_home_assistant(kind="services")` to inspect registered schemas, then `propose_service_action` with a domain, service, explicit entity IDs and supported data fields. This supports lights, switches, climate, covers, and other registered services, `script.turn_on`, `scene.turn_on`, script/scene reload and `homeassistant.restart`. Every such action requires explicit acceptance and `apply_service_action`; restart is never automatic. The five preauthorized automation controls use their dedicated tools.
+
+Proposals bind exact arguments, schema, target registry identities and dependencies. Area/device/label-wide targeting is deliberately excluded; list the intended entities. Apply rejects changed schemas/identities/dependencies and consumes the proposal once. Actions can affect physical devices or external services. There is no general rollback for physical actions; an accepted request and observed states do not prove physical success. A restart can disconnect the client and leave an uncertain result; inspect before proposing another request.

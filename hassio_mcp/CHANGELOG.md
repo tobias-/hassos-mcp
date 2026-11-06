@@ -1,3 +1,9 @@
+# 0.10.0
+
+- Add explicitly accepted service/action proposals for devices, script execution, scene activation, reloads and restart.
+- Bind approval to exact arguments, registered schema, explicit target identities and dependency snapshots.
+- Reject broadened targets and consumed/uncertain retries; physical effects have no automatic rollback.
+
 # 0.9.0
 
 - Discover entity/device/area/integration metadata and supported service schemas.
