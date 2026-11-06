@@ -35,8 +35,10 @@ class FakeHA:
     async def ws(self, command, **params):
         self.calls.append((command, params))
         await asyncio.sleep(0)
-        if self.failure:
+        if self.failure and command != "search/related":
             raise self.failure
+        if command == "search/related":
+            return {}
         if command == "blueprint/list":
             return {PATH: {"metadata": {"name": "Before", "domain": params["domain"]}}}
         target = self.root / "blueprints" / params["domain"] / params["path"]
@@ -75,18 +77,22 @@ async def test_list_read_proposal_acceptance_and_persisted_backup(fixture):
     assert box.read("automation", PATH) == OLD
     ha.calls.clear()
     proposed = await box.propose("update", "automation", PATH, NEW)
-    assert not ha.calls
+    assert not any(
+        command in ("blueprint/save", "blueprint/delete") for command, _ in ha.calls
+    )
     assert file.read_text() == OLD
     assert "-  name: Before" in proposed["diff"]
     assert proposed["approval_required"] is True
     with pytest.raises(ValueError, match="digest"):
         await box.apply(proposed["proposal_id"], "wrong")
-    assert not ha.calls
+    assert not any(
+        command in ("blueprint/save", "blueprint/delete") for command, _ in ha.calls
+    )
     # Proposals and backups survive a new server instance.
     reopened = Blueprints(settings, ha)
     await reopened.apply(proposed["proposal_id"], proposed["digest"])
     assert file.read_text() == NEW
-    assert ha.calls == [
+    assert [call for call in ha.calls if call[0] == "blueprint/save"] == [
         (
             "blueprint/save",
             {"domain": "automation", "path": PATH, "yaml": NEW, "allow_override": True},
@@ -115,7 +121,9 @@ async def test_create_delete_each_need_separate_proposal(fixture, domain, body):
     create = await box.propose("create", domain, path, yaml)
     assert box.read(domain, path) is None
     await box.apply(create["proposal_id"], create["digest"])
-    assert ha.calls[-1][1]["allow_override"] is False
+    assert [call for call in ha.calls if call[0] == "blueprint/save"][-1][1][
+        "allow_override"
+    ] is False
     assert box.read(domain, path) == yaml
     delete = await box.propose("delete", domain, path)
     assert box.read(domain, path) == yaml
@@ -144,7 +152,9 @@ async def test_disabled_expired_stale_and_concurrent_replay(fixture):
     file.write_text(OLD + "# External change\n")
     with pytest.raises(ValueError, match="changed"):
         await box.apply(proposal["proposal_id"], proposal["digest"])
-    assert not ha.calls
+    assert not any(
+        command in ("blueprint/save", "blueprint/delete") for command, _ in ha.calls
+    )
     proposal = await box.propose("update", "automation", PATH, NEW)
     second_instance = Blueprints(settings, ha)
     results = await asyncio.gather(
@@ -153,7 +163,16 @@ async def test_disabled_expired_stale_and_concurrent_replay(fixture):
         return_exceptions=True,
     )
     assert sum(isinstance(result, ValueError) for result in results) == 1
-    assert len(ha.calls) == 1
+    assert (
+        len(
+            [
+                call
+                for call in ha.calls
+                if call[0] in ("blueprint/save", "blueprint/delete")
+            ]
+        )
+        == 1
+    )
 
 
 @pytest.mark.parametrize("operation", ["update", "delete"])
@@ -171,7 +190,16 @@ async def test_api_failure_is_uncertain_and_never_falls_back(fixture, operation)
     assert box.status(proposal["proposal_id"])["status"] == "failed_or_uncertain"
     with pytest.raises(ValueError, match="consumed"):
         await box.apply(proposal["proposal_id"], proposal["digest"])
-    assert len(ha.calls) == 1
+    assert (
+        len(
+            [
+                call
+                for call in ha.calls
+                if call[0] in ("blueprint/save", "blueprint/delete")
+            ]
+        )
+        == 1
+    )
 
 
 async def test_verification_failure_preserves_backup_without_rollback(fixture):
@@ -183,7 +211,16 @@ async def test_verification_failure_preserves_backup_without_rollback(fixture):
     assert "Unexpected" in file.read_text()
     assert box.status(proposal["proposal_id"])["before"] == OLD
     assert box.status(proposal["proposal_id"])["status"] == "failed_or_uncertain"
-    assert len(ha.calls) == 1
+    assert (
+        len(
+            [
+                call
+                for call in ha.calls
+                if call[0] in ("blueprint/save", "blueprint/delete")
+            ]
+        )
+        == 1
+    )
 
 
 @pytest.mark.parametrize(

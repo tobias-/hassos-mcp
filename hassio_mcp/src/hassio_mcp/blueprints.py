@@ -13,6 +13,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 
 from .changes import canonical, digest
+from .dependencies import Dependencies
 from .yaml_files import yaml_engine
 
 DOMAINS = ("automation", "script", "template")
@@ -95,9 +96,57 @@ def parse_blueprint(source, domain):
     return normalized
 
 
+def validate_consumer_inputs(source, domain, consumers):
+    document = parse_blueprint(source, domain)
+    definitions = {}
+    for key, value in document["blueprint"]["input"].items():
+        entries = (
+            value["input"]
+            if isinstance(value, dict) and "input" in value
+            else {key: value}
+        )
+        if not isinstance(entries, dict):
+            raise ValueError("Blueprint input sections must contain a mapping")
+        for name, definition in entries.items():
+            if name in definitions:
+                raise ValueError("Duplicate blueprint input name")
+            definitions[name] = definition
+    references = set()
+
+    def walk(value):
+        if isinstance(value, InputReference):
+            references.add(value.name)
+        elif isinstance(value, dict):
+            for item in value.values():
+                walk(item)
+        elif isinstance(value, list):
+            for item in value:
+                walk(item)
+
+    walk(document)
+    if references - definitions.keys():
+        raise ValueError(
+            "Undefined !input references: "
+            + ", ".join(sorted(references - definitions.keys()))
+        )
+    for consumer in consumers:
+        supplied = consumer["use_blueprint"].get("input", {})
+        missing = [
+            name
+            for name, definition in definitions.items()
+            if name not in supplied
+            and not (isinstance(definition, dict) and "default" in definition)
+        ]
+        if missing:
+            raise ValueError(
+                f"Consumer {consumer['entity_id']} lacks inputs/defaults: {', '.join(sorted(missing))}. Supply defaults or update consumers separately first."
+            )
+
+
 class Blueprints:
     def __init__(self, settings, ha):
         self.settings, self.ha = settings, ha
+        self.dependencies = Dependencies(ha)
         self.root = settings.config_dir.absolute()
         settings.data_dir.mkdir(mode=0o700, parents=True, exist_ok=True)
         self.db_path = settings.data_dir / "blueprint_changes.sqlite3"
@@ -177,6 +226,9 @@ class Blueprints:
             after = config_yaml
         if before == after:
             raise ValueError("No change proposed")
+        impact = await self.dependencies.blueprint_consumers(domain, path)
+        if after is not None:
+            validate_consumer_inputs(after, domain, impact["consumers"])
         diff = "".join(
             line if line.endswith("\n") else line + "\n\\ No newline at end of file\n"
             for line in difflib.unified_diff(
@@ -193,6 +245,7 @@ class Blueprints:
             "before": before,
             "after": after,
             "diff": diff,
+            "impact": impact,
         }
         payload["digest"] = digest(canonical(payload))
         proposal_id = secrets.token_urlsafe(24)
@@ -208,6 +261,7 @@ class Blueprints:
             "domain": domain,
             "path": path,
             "diff": diff,
+            "impact": impact,
             "expires_in_seconds": 1800,
             "approval_required": True,
             "instructions": "Show this exact diff and operation to the user and WAIT for explicit acceptance before apply_blueprint_change. Updating can reload all consumers and activate behavior. Deleting can break references; HA may reject in-use blueprints. HA validates and may normalize YAML formatting/defaults. This proposal performs no HA write.",
@@ -243,6 +297,14 @@ class Blueprints:
                 domain, path = payload["domain"], payload["path"]
                 if self.read(domain, path) != payload["before"]:
                     raise ValueError("Blueprint changed since review; propose again")
+                if (
+                    "impact" in payload
+                    and await self.dependencies.blueprint_consumers(domain, path)
+                    != payload["impact"]
+                ):
+                    raise ValueError(
+                        "Blueprint consumers or inputs changed since review; propose again"
+                    )
                 if payload["operation"] == "delete":
                     await self.ha.ws("blueprint/delete", domain=domain, path=path)
                     if self.read(domain, path) is not None:
@@ -262,6 +324,14 @@ class Blueprints:
                     if saved is None or parse_blueprint(saved, domain) != expected:
                         raise RuntimeError(
                             "Saved blueprint differs from the proposal; inspect before retrying"
+                        )
+                    if (
+                        "impact" in payload
+                        and await self.dependencies.blueprint_consumers(domain, path)
+                        != payload["impact"]
+                    ):
+                        raise RuntimeError(
+                            "Blueprint consumer references changed; inspect before retrying"
                         )
             except BaseException:
                 with self.db() as db:

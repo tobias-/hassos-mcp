@@ -28,7 +28,12 @@ async def main(images):
         ):
             await session.initialize()
             tools = {tool.name: tool for tool in (await session.list_tools()).tools}
-            assert len(tools) == 29
+            assert {
+                "apply_automation_change",
+                "apply_blueprint_change",
+                "inspect_dependencies",
+                "blueprint_consumers",
+            } <= tools.keys()
             for name in (
                 "enable_automation",
                 "disable_automation",

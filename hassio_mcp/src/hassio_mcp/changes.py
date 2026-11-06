@@ -8,6 +8,7 @@ import sqlite3
 import time
 from contextlib import contextmanager
 
+from .dependencies import Dependencies
 from .ha import identifier
 from .yaml_files import AutomationFiles, atomic_write, dump, parse_automation
 
@@ -24,6 +25,7 @@ class Changes:
     def __init__(self, settings, ha):
         self.settings, self.ha = settings, ha
         self.files = AutomationFiles(settings)
+        self.dependencies = Dependencies(ha)
         settings.data_dir.mkdir(mode=0o700, parents=True, exist_ok=True)
         self.db_path = settings.data_dir / "changes.sqlite3"
         with self.db() as db:
@@ -112,6 +114,7 @@ class Changes:
             "before": before,
             "after": after,
             "diff": diff,
+            "impact": await self.dependencies.automation_impact(automation_id),
         }
         payload["digest"] = digest(canonical(payload))
         with self.db() as db:
@@ -124,6 +127,7 @@ class Changes:
             "proposal_id": proposal_id,
             "digest": payload["digest"],
             "diff": diff,
+            "impact": payload["impact"],
             "expires_in_seconds": 1800,
             "approval_required": True,
             "instructions": "Show this diff and explain its effects, including deletion if requested. Wait for explicit user approval before calling apply_automation_change with this exact proposal ID and digest. Configuration changes can reload automations, stop runs, or activate triggers. Enable/disable/trigger/inspect/reload have separate directly authorized tools and do not authorize this configuration change.",
@@ -164,6 +168,16 @@ class Changes:
                     "UPDATE proposals SET status='applying' WHERE id=?", (proposal_id,)
                 )
             try:
+                if (
+                    "impact" in payload
+                    and await self.dependencies.automation_impact(
+                        payload["automation_id"]
+                    )
+                    != payload["impact"]
+                ):
+                    raise ValueError(
+                        "Automation dependencies changed since review; propose again"
+                    )
                 if payload["source_file"]:
                     await self._apply_file(payload)
                 else:

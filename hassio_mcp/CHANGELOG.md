@@ -1,3 +1,9 @@
+# 0.6.0
+
+- Add dependency inspection and blueprint consumer/input snapshots to proposals.
+- Reject changed dependency snapshots and missing blueprint inputs before writes.
+- Verify consumer references survive blueprint updates; explicitly report indexing limits.
+
 # 0.5.0
 
 - Add direct automation enable, disable, trigger, inspect, and reload tools without a proposal or additional acceptance step.

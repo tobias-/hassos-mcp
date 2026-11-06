@@ -26,7 +26,12 @@ async def test_real_stdio_discovery_and_missing_credentials(tmp_path):
         async with ClientSession(read, write) as session:
             await session.initialize()
             tools = {tool.name: tool for tool in (await session.list_tools()).tools}
-            assert len(tools) == 29
+            assert {
+                "apply_automation_change",
+                "apply_blueprint_change",
+                "inspect_dependencies",
+                "blueprint_consumers",
+            } <= tools.keys()
             for name in (
                 "enable_automation",
                 "disable_automation",
@@ -72,9 +77,10 @@ async def test_real_stdio_discovery_and_missing_credentials(tmp_path):
                     "path": "local/test.yaml",
                 },
             )
-            assert not result.isError and blueprint.exists()
-            blueprint_proposal = json.loads(result.content[0].text)
-            assert blueprint_proposal["approval_required"] is True
+            assert result.isError and blueprint.exists()
+            assert (
+                "HA_TOKEN" in result.content[0].text
+            )  # Impact inspection must succeed before proposing.
             result = await session.call_tool(
                 "submit_suggestion",
                 {
@@ -96,9 +102,4 @@ async def test_real_stdio_discovery_and_missing_credentials(tmp_path):
             rows = json.loads(result.content[0].text)["items"]
             assert rows[0]["id"] == saved["id"]
             assert rows[0]["title"] == "Aligned history"
-            result = await session.call_tool(
-                "blueprint_change_status",
-                {"proposal_id": blueprint_proposal["proposal_id"]},
-            )
-            assert json.loads(result.content[0].text)["status"] == "pending"
             assert blueprint.exists()

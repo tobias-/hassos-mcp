@@ -8,6 +8,7 @@ from .automation_management import AutomationManagement
 from .blueprints import Blueprints
 from .changes import Changes
 from .config import Settings
+from .dependencies import Dependencies
 from .ha import HomeAssistant, entity, time_range
 from .influx import Influx
 from .suggestions import Suggestions
@@ -42,6 +43,7 @@ def build_server(settings=None, ha=None):
     suggestions = Suggestions(settings)
     blueprints = Blueprints(settings, ha)
     automations = AutomationManagement(ha)
+    dependencies = Dependencies(ha)
     mcp = FastMCP(
         "Home Assistant Private",
         instructions=(
@@ -191,6 +193,37 @@ def build_server(settings=None, ha=None):
             end_time=end,
             period=period,
         )
+
+    @mcp.tool(annotations=READ)
+    async def inspect_dependencies(
+        item_type: Literal[
+            "entity",
+            "automation",
+            "script",
+            "scene",
+            "device",
+            "area",
+            "floor",
+            "label",
+            "integration",
+            "config_entry",
+            "automation_blueprint",
+            "script_blueprint",
+        ],
+        item_id: str,
+    ) -> dict:
+        """Read HA's related entities/devices/automations/scripts/blueprints before planning changes. Blueprint IDs are relative paths; entity IDs include their domain. Dynamic references and unloaded YAML may be missing; never claim an empty index proves no dependents."""
+        return await dependencies.related(item_type, item_id)
+
+    @mcp.tool(annotations=READ)
+    async def blueprint_consumers(
+        domain: Literal["automation", "script", "template"], path: str
+    ) -> dict:
+        """List loaded blueprint consumers with their exact use_blueprint references and inputs. Use before updating a shared blueprint. Template blueprint indexing is unavailable and explicitly reported as unknown. Never detach consumers to work around a blueprint edit."""
+        from .blueprints import blueprint_path
+
+        blueprint_path(domain, path)
+        return await dependencies.blueprint_consumers(domain, path)
 
     @mcp.tool(annotations=READ)
     async def list_blueprints(
