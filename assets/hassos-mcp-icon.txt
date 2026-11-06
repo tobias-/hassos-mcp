@@ -1,0 +1,4 @@
+Generated using the built-in image generation tool.
+
+Prompt:
+Use case: logo-brand. Asset type: square app icon for Hassos MCP, a private Home Assistant connection plugin for ChatGPT. Create one polished, distinctive icon: a bold white house roof outline enclosing a beautifully interlocking pair of cyan and teal links, suggesting home automation and a secure connection. Deep midnight navy full-bleed square background with a very subtle radial blue glow. Crisp geometric forms, generous negative space, rounded line endings, balanced optical proportions, premium restrained finish. Center the mark within the central 65% of the canvas so it works in circular and rounded-square crops. Strong legibility at 32px. Flat front view, no text, no letters, no tiny circuitry, no official OpenAI or Home Assistant logo, no mockup, no border, no watermark. Output one square icon.
