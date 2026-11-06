@@ -28,7 +28,7 @@ Repository URL: `https://github.com/tobias-/hassos-mcp`
 
 1. Open **Settings → Apps → Install app → ⋮ → Repositories** (called **Add-ons → Add-on Store** on older HAOS versions), add the repository URL, and install **Home Assistant Private MCP**. Use the app/add-on store; HACS does not install container apps.
 2. HAOS builds the app from the self-contained `hassio_mcp/` directory. There is no container registry login or separate image publication step. Builds support `amd64` and `aarch64`; only the development host's architecture has been container-tested locally.
-3. Set `tunnel_id` and `openai_api_key` in the app configuration. With `ha_token` empty, it uses HAOS's injected Supervisor token and the internal Core proxy. If your HA version denies an operation through that proxy, provide an HA long-lived access token for an administrator and `ha_url: http://homeassistant:8123`.
+3. Start the add-on and select **Open Web UI** for the linked setup guide. It stays available even before credentials are configured. Follow its links to obtain `tunnel_id` and `openai_api_key`, enter them in the Configuration tab, then save and restart. With `ha_token` empty, HAOS supplies automatic authentication. If a required operation is denied, the guide explains how to obtain an administrator token for a manual connection.
 4. Configure InfluxDB using the **hostname shown on your InfluxDB add-on's information page**, port 8086, the installed major version, and credentials restricted to read access. For v1 use database/user/password; for v2 use org/bucket/token. Being an add-on alone does not identify its version. Custom Influx tag layouts and InfluxDB 3 are not supported yet.
 5. For package-file editing, add relative filenames to `yaml_files`, for example `packages/lighting.yaml`. The config directory is mounted at `/homeassistant`. Start the app and connect ChatGPT as described below.
 
@@ -37,6 +37,8 @@ The GitHub repository must be published and reachable before the installation li
 For manual installation instead, run `python3 scripts/package_addon.py`, then extract `build/hassio-mcp-haos.tar.gz` under HAOS `/addons/` and install it from Local apps. The source layout is the same for both routes.
 
 HAOS stores app options under `/data/options.json`; the image contains no credentials. HAOS backups may contain these options. The local `.env.local` used during provisioning is ignored by Git and Docker and is not included in the app archive.
+
+The setup guide is available through authenticated Home Assistant ingress only; port 8099 is not published to the host. It shows public instructions and links, never your saved values. The native Configuration tab has readable field labels and help text. Its descriptions are plain text, so use Web UI or Documentation for clickable links. Existing configuration keys and values are preserved when upgrading from 0.1.0.
 
 ## Docker Compose fallback
 
@@ -82,10 +84,12 @@ python3 -m venv .venv
 .venv/bin/pip install -r requirements-dev.txt -e ./hassio_mcp
 .venv/bin/pytest -q
 .venv/bin/ruff check hassio_mcp/src tests scripts
-docker build --target compose -t hassio-mcp:0.1.0 hassio_mcp
-docker build -t hassio-mcp-haos:0.1.0 hassio_mcp
+docker build --target compose -t hassio-mcp:0.2.0 hassio_mcp
+docker build -t hassio-mcp-haos:0.2.0 hassio_mcp
 ```
 
 Tests cover actual MCP stdio initialization/discovery, HTTP/WebSocket authentication, read failures, write annotations, proposal expiry/digest/replay/concurrency, stale edits, YAML rollback/path restrictions, and query input boundaries. These use simulated HA responses; a live HAOS/tunnel/ChatGPT acceptance check is still required before enabling writes.
+
+Setup copy lives in `hassio_mcp/src/hassio_mcp/setup_content.py`. After editing it, run `.venv/bin/python scripts/generate_setup_docs.py` to refresh native option translations and the Documentation tab. Tests also cover ingress access restrictions, configuration-help coverage, and starting the setup guide without credentials.
 
 Protocol references: [Secure MCP Tunnel](https://developers.openai.com/api/docs/guides/secure-mcp-tunnels), [tunnel client deployment](https://github.com/openai/tunnel-client/blob/main/docs/deployment/docker.md), [HA REST API](https://contributors.home-assistant.io/core/internals/rest-api/), [HA automation config API](https://github.com/home-assistant/core/blob/dev/homeassistant/components/config/automation.py), [HA trace API](https://github.com/home-assistant/core/blob/dev/homeassistant/components/trace/websocket_api.py), [InfluxQL](https://docs.influxdata.com/influxdb/v1/query_language/explore-data/), [InfluxDB v2 query API](https://docs.influxdata.com/influxdb/v2/query-data/execute-queries/influx-api/).

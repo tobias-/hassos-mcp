@@ -1,5 +1,5 @@
 name: Home Assistant Private MCP
-version: "0.1.0"
+version: "0.2.0"
 slug: hassio_mcp
 url: https://github.com/tobias-/hassos-mcp
 description: Private ChatGPT access to states, history, traces and reviewed automation edits
@@ -8,6 +8,10 @@ startup: application
 boot: auto
 init: false
 homeassistant_api: true
+ingress: true
+ingress_port: 8099
+panel_title: MCP setup guide
+panel_icon: mdi:help-circle-outline
 map:
   - type: homeassistant_config
     read_only: false

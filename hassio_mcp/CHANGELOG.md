@@ -1,3 +1,11 @@
+# 0.2.0
+
+- Add a setup Web UI with direct links and step-by-step guidance for every setting.
+- Keep the guide available before tunnel credentials have been configured.
+- Add readable configuration labels and help text to the native HAOS form.
+- Explain required settings, automatic HAOS access, and optional InfluxDB v1/v2 values.
+- Expand the Documentation tab with matching links and troubleshooting.
+
 # 0.1.0
 
 - Initial private MCP server with outbound OpenAI Secure MCP Tunnel.

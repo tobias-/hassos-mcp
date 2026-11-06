@@ -46,6 +46,7 @@ def test_manual_package_contains_only_public_source():
             for name in names
         )
         assert "hassio_mcp/config.yaml" in names
+        assert "hassio_mcp/translations/en.yaml" in names
         assert "hassio_mcp/src/hassio_mcp/launcher.py" in names
         for member in archive.getmembers():
             assert member.isfile()

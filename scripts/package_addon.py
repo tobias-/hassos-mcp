@@ -20,7 +20,11 @@ def source_files():
         "DOCS.md",
         "CHANGELOG.md",
     )
-    return [SOURCE / name for name in names] + sorted((SOURCE / "src").rglob("*.py"))
+    return (
+        [SOURCE / name for name in names]
+        + sorted((SOURCE / "src").rglob("*.py"))
+        + sorted((SOURCE / "translations").glob("*.yaml"))
+    )
 
 
 def main():

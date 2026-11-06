@@ -1,0 +1,75 @@
+configuration:
+  tunnel_id:
+    name: Tunnel ID (required)
+    description: 'Open OpenAI tunnel settings, create a Secure MCP Tunnel, and copy its tunnel ID here. Associate
+      it with your personal ChatGPT workspace so it appears when you add the app. Starts with tunnel_ — copy the
+      whole ID, not a URL. Setup links: open Web UI or the Documentation tab. https://platform.openai.com/settings/organization/tunnels'
+  openai_api_key:
+    name: OpenAI runtime API key (required)
+    description: "In OpenAI API keys, create a dedicated runtime key for this add-on and copy the secret value into
+      this password field. The key's identity needs Tunnels Read + Use. This is the runtime key, not an admin key
+      or a ChatGPT password. Use the same organization as the tunnel. Save the key when it is shown. Setup links:
+      open Web UI or the Documentation tab. https://platform.openai.com/settings/organization/api-keys"
+  ha_url:
+    name: Home Assistant URL
+    description: 'Leave http://homeassistant:8123 on HAOS. With a manual token, enter the Home Assistant base address
+      reachable from the add-on, without /api. When the token is blank, the app uses the automatic Supervisor connection
+      instead. HAOS default: http://homeassistant:8123 Setup links: open Web UI or the Documentation tab. https://github.com/tobias-/hassos-mcp/blob/master/hassio_mcp/DOCS.md#home-assistant-connection'
+  ha_token:
+    name: Home Assistant access token
+    description: 'Normally leave blank. For a manual connection, open your Home Assistant user profile → Security
+      → Long-lived access tokens, create a token, and paste it here. Automation editing and traces require an administrator
+      account. Blank = use HAOS automatic authentication. Setup links: open Web UI or the Documentation tab. https://my.home-assistant.io/redirect/profile/'
+  allow_automation_writes:
+    name: Allow approved automation edits
+    description: 'Keep off during setup. To enable editing, first configure ChatGPT to ask every time for apply_automation_change,
+      then turn this on and restart. Review the exact proposed diff before approving. Saving may activate automation
+      triggers. Default: off. Read and debugging tools still work. Setup links: open Web UI or the Documentation
+      tab. https://developers.openai.com/api/docs/guides/custom-mcp-server'
+  yaml_files:
+    name: Allowed automation YAML files
+    description: 'Leave empty for UI-managed automations. To edit package YAML, add the existing file paths relative
+      to your Home Assistant configuration directory. Each target automation needs an id. This grants access only
+      to the listed files. Example: packages/lighting.yaml Setup links: open Web UI or the Documentation tab. https://www.home-assistant.io/docs/configuration/packages/'
+  influx_url:
+    name: InfluxDB server URL
+    description: "Open the InfluxDB add-on's Information tab and copy its Hostname. Use http://HOSTNAME:8086, or
+      your configured HTTPS address. This is the database API address, not the browser's ingress URL. Leave blank
+      to skip InfluxDB. Example: http://a0d7b954-influxdb:8086 — verify your own hostname. Setup links: open Web
+      UI or the Documentation tab. https://github.com/hassio-addons/app-influxdb/blob/main/influxdb/DOCS.md"
+  influx_version:
+    name: InfluxDB major version
+    description: 'Find the database server version in the InfluxDB UI or its startup logs. Choose 1 for database/username/password,
+      or 2 for organization/bucket/token. This app does not support InfluxDB 3 queries. 1.x: use the three v1 fields.
+      2.x: use the three v2 fields. Setup links: open Web UI or the Documentation tab. https://www.home-assistant.io/integrations/influxdb/'
+  influx_database:
+    name: 'InfluxDB v1: database'
+    description: 'For version 1 only. Copy the database name from the influxdb section of your Home Assistant configuration
+      or the database list in InfluxDB. Use the existing database containing your recorded values. Often homeassistant;
+      verify the name in your configuration. Setup links: open Web UI or the Documentation tab. https://www.home-assistant.io/integrations/influxdb/#influxdb-1x-configuration-options'
+  influx_user:
+    name: 'InfluxDB v1: read-only username'
+    description: 'For version 1 only. Create a dedicated InfluxDB user and grant READ on your Home Assistant database.
+      Enter that username here. This is an InfluxDB account, not your Home Assistant login. Suggested account name:
+      hassio_mcp_reader Setup links: open Web UI or the Documentation tab. https://docs.influxdata.com/influxdb/v1/administration/authentication_and_authorization/#user-management-commands'
+  influx_password:
+    name: 'InfluxDB v1: password'
+    description: 'For version 1 only. Enter the password you chose for the read-only InfluxDB user. If you no longer
+      have it, set a new password for that dedicated account in InfluxDB. Use the password for the username above.
+      Setup links: open Web UI or the Documentation tab. https://docs.influxdata.com/influxdb/v1/administration/authentication_and_authorization/#user-management-commands'
+  influx_org:
+    name: 'InfluxDB v2: organization'
+    description: 'For version 2 only. In the InfluxDB UI, open the account menu → Switch Organizations and copy
+      the organization name that owns your Home Assistant bucket. This is your InfluxDB organization, independent
+      of OpenAI. Setup links: open Web UI or the Documentation tab. https://docs.influxdata.com/influxdb/v2/admin/organizations/view-orgs/'
+  influx_bucket:
+    name: 'InfluxDB v2: bucket'
+    description: 'For version 2 only. Open InfluxDB → Load Data → Buckets and copy the name of the bucket receiving
+      Home Assistant data. It should match the bucket in your HA influxdb configuration. Enter the existing bucket
+      name, not its ID. Setup links: open Web UI or the Documentation tab. https://docs.influxdata.com/influxdb/v2/admin/buckets/view-buckets/'
+  influx_token:
+    name: 'InfluxDB v2: read-only API token'
+    description: 'For version 2 only. In InfluxDB, open Load Data → API Tokens → Generate API Token → Custom API
+      Token. Grant Read for your Home Assistant bucket, then copy the token here. Leave the v1 username and password
+      blank. Grant bucket Read access; this app does not need Write access. Setup links: open Web UI or the Documentation
+      tab. https://docs.influxdata.com/influxdb/v2/admin/tokens/create-token/'
