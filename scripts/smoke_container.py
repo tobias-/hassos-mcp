@@ -29,6 +29,25 @@ async def main(images):
             await session.initialize()
             tools = {tool.name: tool for tool in (await session.list_tools()).tools}
             assert {
+                "get_config_file",
+                "propose_config_file_change",
+                "apply_config_file_change",
+                "apply_resource_change",
+                "apply_service_action",
+                "discover_home_assistant",
+                "propose_blueprint_rollback",
+            } <= tools.keys()
+            for name in (
+                "apply_resource_change",
+                "apply_service_action",
+                "apply_config_file_change",
+            ):
+                assert tools[name].annotations.readOnlyHint is False
+                result = await session.call_tool(
+                    name, {"proposal_id": "test", "approved_digest": "test"}
+                )
+                assert result.isError and "disabled" in result.content[0].text
+            assert {
                 "apply_automation_change",
                 "apply_blueprint_change",
                 "inspect_dependencies",

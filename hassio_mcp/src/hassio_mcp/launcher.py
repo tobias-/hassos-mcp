@@ -70,6 +70,7 @@ def main():
             "influx_org": "INFLUX_ORG",
             "influx_bucket": "INFLUX_BUCKET",
             "yaml_files": "HA_YAML_FILES",
+            "config_files": "HA_CONFIG_FILES",
         }
         for key, env in mapping.items():
             if key in options:

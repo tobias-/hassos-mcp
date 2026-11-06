@@ -1,3 +1,10 @@
+# 0.11.0
+
+- Add explicitly allowlisted configuration-file read/edit/create/delete with accepted diffs and persistent backups.
+- Validate YAML locally and full HA config after accepted writes; restore rejected files before reload when untouched externally.
+- Add separately accepted whole-file rollback and reviewed optional component reload.
+- Exclude secret/hidden/symlink paths and inline credential-bearing management payloads.
+
 # 0.10.0
 
 - Add explicitly accepted service/action proposals for devices, script execution, scene activation, reloads and restart.

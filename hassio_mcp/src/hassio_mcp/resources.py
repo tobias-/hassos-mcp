@@ -5,6 +5,7 @@ import re
 
 from .dependencies import Dependencies
 from .ha import HAError, identifier
+from .privacy import ensure_no_credentials
 from .yaml_files import dump, yaml_engine
 
 
@@ -23,7 +24,9 @@ class Resources:
 
     async def read(self, domain, resource_id):
         try:
-            return await self.ha.request("GET", self.path(domain, resource_id))
+            result = await self.ha.request("GET", self.path(domain, resource_id))
+            ensure_no_credentials(result, self.reviews.settings)
+            return result
         except HAError as exc:
             if exc.status == 404:
                 return None
@@ -87,6 +90,7 @@ class Resources:
                 after["id"] = resource_id
         if before == after:
             raise ValueError("No change proposed")
+        ensure_no_credentials(after, self.reviews.settings)
         impact = await self.impact(domain, resource_id)
         if operation == "create" and impact["entities"]:
             raise ValueError(

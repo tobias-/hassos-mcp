@@ -35,6 +35,7 @@ class Dependencies:
             item_id=item_id,
             include_disabled_entities=True,
         )
+        related = {key: sorted(values) for key, values in related.items()}
         return {
             "item_type": item_type,
             "item_id": item_id,

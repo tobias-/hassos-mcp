@@ -76,3 +76,18 @@ async def test_disabled_stale_and_uncertain_writes(tmp_path):
     with pytest.raises(ValueError, match="consumed"):
         await manager.apply(proposal["proposal_id"], proposal["digest"])
     assert len(ha.writes) == 1
+
+
+async def test_credentials_are_rejected_before_return_or_proposal(tmp_path):
+    reviews, ha = ReviewStore(Settings(data_dir=tmp_path)), HA()
+    manager = Resources(ha, reviews)
+    ha.value = {"sequence": [], "password": "private-value"}
+    with pytest.raises(ValueError, match="credential"):
+        await manager.read("script", "test")
+    ha.value = None
+    with pytest.raises(ValueError, match="credential"):
+        await manager.propose(
+            "script", "test", "create", "sequence: []\npassword: private-value\n"
+        )
+    with reviews.db() as db:
+        assert db.execute("SELECT COUNT(*) FROM proposals").fetchone()[0] == 0

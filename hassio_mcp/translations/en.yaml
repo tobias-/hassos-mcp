@@ -44,6 +44,14 @@ configuration:
     description: 'Leave empty for UI-managed automations. To edit package YAML, add the existing file paths relative
       to your Home Assistant configuration directory. Each target automation needs an id. This grants access only
       to the listed files. Example: packages/lighting.yaml Setup links: open Web UI or the Documentation tab. https://www.home-assistant.io/docs/configuration/packages/'
+  config_files:
+    name: Allowed configuration files
+    description: 'List exact YAML paths relative to the connected Home Assistant config directory, for example packages/lights.yaml
+      or scripts.yaml. This grants read and reviewed whole-file editing access. Secret files, hidden paths, symlinks,
+      blueprint files, and inline credentials are excluded. Use native automation/script/scene APIs where possible.
+      Configuration writes also require accepted proposals and allow_management_writes. Default: empty. Whole-file
+      rollback can replace later edits; review the new diff. Setup links: open Web UI or the Documentation tab.
+      https://github.com/tobias-/hassos-mcp#restricted-configuration-files'
   influx_url:
     name: InfluxDB server URL
     description: "Open the InfluxDB add-on's Information tab and copy its Hostname. Use http://HOSTNAME:8086, or

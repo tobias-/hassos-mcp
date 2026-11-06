@@ -9,6 +9,7 @@ from .automation_management import AutomationManagement
 from .blueprints import Blueprints
 from .changes import Changes
 from .config import Settings
+from .config_files import ConfigFiles
 from .dependencies import Dependencies
 from .discovery import discover
 from .ha import HomeAssistant, entity, time_range
@@ -51,6 +52,7 @@ def build_server(settings=None, ha=None):
     reviews = ReviewStore(settings)
     resources = Resources(ha, reviews)
     actions = Actions(ha, reviews)
+    config_files = ConfigFiles(settings, ha, reviews)
     mcp = FastMCP(
         "Home Assistant Private",
         instructions=(
@@ -129,6 +131,7 @@ def build_server(settings=None, ha=None):
             "blueprint_writes_enabled": settings.blueprint_writes_enabled,
             "management_writes_enabled": settings.management_writes_enabled,
             "yaml_files": list(settings.yaml_files),
+            "config_files": list(settings.config_files),
             "influx_configured": bool(settings.influx_url),
             "influx_version": settings.influx_version,
             "access": "Private stdio endpoint; caller access is enforced by the OpenAI tunnel organization/workspace permissions.",
@@ -204,6 +207,34 @@ def build_server(settings=None, ha=None):
             end_time=end,
             period=period,
         )
+
+    @mcp.tool(annotations=PROPOSE)
+    async def propose_config_file_change(
+        path: str,
+        content: str | None,
+        reload_domain: Literal["automation", "script", "scene", "template"]
+        | None = None,
+    ) -> dict:
+        """Propose a complete replacement/create (content) or deletion (null) of an explicitly allowlisted config file. Prefer native resource tools first. Show exact whole-file diff, limited dependency impact and optional reload; WAIT for explicit acceptance before apply_config_file_change. Full HA validation follows accepted write, with rollback on rejection before reload. No automatic restart."""
+        return await config_files.propose(path, content, reload_domain)
+
+    @mcp.tool(annotations=READ)
+    def get_config_file(path: str) -> dict:
+        """Read an exact allowlisted YAML config file without expanding includes or !secret references. Secret files, inline credentials and symlinks are rejected. Does not grant access to arbitrary files."""
+        source = config_files.read(path)
+        if source is None:
+            raise ValueError("Allowlisted configuration file does not exist")
+        return {"path": path, "content": source}
+
+    @mcp.tool(annotations=WRITE)
+    async def apply_config_file_change(proposal_id: str, approved_digest: str) -> dict:
+        """WRITE: Apply only the exact explicitly accepted config-file proposal. Requires confirmation every time. Checks staleness, saves atomically, validates HA and restores rejected changes if untouched externally, then performs only the reviewed reload. Failures may be uncertain; never blindly retry."""
+        return await config_files.apply(proposal_id, approved_digest)
+
+    @mcp.tool(annotations=PROPOSE)
+    async def propose_config_file_rollback(proposal_id: str) -> dict:
+        """Prepare a separately accepted whole-file restoration from a management backup. This can replace later edits: show the new complete diff and impact and WAIT for explicit acceptance before applying."""
+        return await config_files.rollback(proposal_id)
 
     @mcp.tool(annotations=PROPOSE)
     async def propose_service_action(

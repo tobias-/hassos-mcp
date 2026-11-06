@@ -96,6 +96,16 @@ Example: packages/lighting.yaml
 
 [Home Assistant packages](https://www.home-assistant.io/docs/configuration/packages/) · [Supported YAML layouts](https://github.com/tobias-/hassos-mcp#yaml-editing-and-recovery-limits)
 
+### Allowed configuration files
+
+Configuration field: `config_files`
+
+List exact YAML paths relative to the connected Home Assistant config directory, for example packages/lights.yaml or scripts.yaml. This grants read and reviewed whole-file editing access. Secret files, hidden paths, symlinks, blueprint files, and inline credentials are excluded. Use native automation/script/scene APIs where possible. Configuration writes also require accepted proposals and allow_management_writes.
+
+Default: empty. Whole-file rollback can replace later edits; review the new diff.
+
+[Restricted configuration editing](https://github.com/tobias-/hassos-mcp#restricted-configuration-files)
+
 ## InfluxDB history
 
 Home Assistant's Recorder history works without InfluxDB settings. Add InfluxDB only for data already stored there. Choose the database server's major version, not the Home Assistant add-on release number.

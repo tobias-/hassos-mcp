@@ -141,8 +141,8 @@ python3 -m venv .venv
 .venv/bin/pip install -r requirements-dev.txt -e ./hassio_mcp
 .venv/bin/pytest -q
 .venv/bin/ruff check hassio_mcp/src tests scripts
-docker build --target compose -t hassio-mcp:0.4.0 hassio_mcp
-docker build -t hassio-mcp-haos:0.4.0 hassio_mcp
+docker build --target compose -t hassio-mcp:0.11.0 hassio_mcp
+docker build -t hassio-mcp-haos:0.11.0 hassio_mcp
 ```
 
 Tests cover actual MCP stdio initialization/discovery, HTTP/WebSocket authentication, read failures, write annotations, proposal expiry/digest/replay/concurrency, stale edits, YAML rollback/path restrictions, and query input boundaries. These use simulated HA responses; a live HAOS/tunnel/ChatGPT acceptance check is still required before enabling writes.
@@ -172,3 +172,11 @@ Use `list_resources`, `get_resource_config`, and `propose_resource_change` for s
 Use `discover_home_assistant(kind="services")` to inspect registered schemas, then `propose_service_action` with a domain, service, explicit entity IDs and supported data fields. This supports lights, switches, climate, covers, and other registered services, `script.turn_on`, `scene.turn_on`, script/scene reload and `homeassistant.restart`. Every such action requires explicit acceptance and `apply_service_action`; restart is never automatic. The five preauthorized automation controls use their dedicated tools.
 
 Proposals bind exact arguments, schema, target registry identities and dependencies. Area/device/label-wide targeting is deliberately excluded; list the intended entities. Apply rejects changed schemas/identities/dependencies and consumes the proposal once. Actions can affect physical devices or external services. There is no general rollback for physical actions; an accepted request and observed states do not prove physical success. A restart can disconnect the client and leave an uncertain result; inspect before proposing another request.
+
+## Restricted configuration files
+
+Set `config_files` / `HA_CONFIG_FILES` to exact relative YAML paths and mount the connected HA config directory. `get_config_file` reads those files without resolving includes or secret references. Hidden paths, secret-named files, symlinks, blueprint files, non-YAML files, and inline credential fields are rejected. Known configured credentials and common authorization/private-key patterns are also rejected; free-text arbitrary unknown secrets cannot be identified reliably. Keep credentials in HA `!secret` references. The limit is 256 KiB per file.
+
+Prefer native resource APIs. For package YAML or other explicitly allowlisted config, use `propose_config_file_change` with full content, or null to delete. Review the exact whole-file diff and limited static dependency report, obtain explicit acceptance, then call `apply_config_file_change`. Requires `allow_management_writes`. Local YAML checks precede approval; full HA validation reads the accepted file after atomic replacement. Invalid configuration is restored before reload if no external edit intervened. Otherwise the backup is retained and the failure reported as uncertain. Only an optional reviewed automation/script/scene/template reload occurs; restart requires a separate accepted service action.
+
+`propose_config_file_rollback` creates a new reviewed restoration of the whole backed-up file; it can replace later edits, so inspect the new diff. Use `management_change_status` for backups and outcomes. As with native edits, external editors do not share a transaction: avoid concurrent changes. Existing parent directories are required for new files.

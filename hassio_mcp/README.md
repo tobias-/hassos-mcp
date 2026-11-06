@@ -4,6 +4,14 @@ Connect ChatGPT to Home Assistant through an outbound Secure MCP Tunnel.
 Read entity values, Recorder/InfluxDB history, automations, and execution traces;
 review and approve automation edits in ChatGPT before applying them.
 
+Version 0.11.0 adds dependency inspection, reviewed rollback, script/scene CRUD,
+registry discovery, diagnostics, accepted service/device actions, and allowlisted
+configuration-file editing. Refresh the ChatGPT plugin's tools after updating.
+Keep every `apply_*` tool on ask every time. The five direct automation controls
+are preauthorized; allow those individually in your client if it still prompts.
+Additional management writes require `allow_management_writes`; configuration
+files require exact entries in `config_files` and the connected HA config mount.
+
 Automation enable/disable/trigger/inspect/reload are preauthorized direct tools,
 including when configuration writes are disabled. Create/edit/delete still need
 explicit acceptance of a proposal. Update to 0.5.0 and refresh ChatGPT's tool list;

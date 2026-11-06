@@ -151,6 +151,19 @@ GROUPS = [
                     ),
                 ],
             },
+            {
+                "key": "config_files",
+                "name": "Allowed configuration files",
+                "required": False,
+                "help": "List exact YAML paths relative to the connected Home Assistant config directory, for example packages/lights.yaml or scripts.yaml. This grants read and reviewed whole-file editing access. Secret files, hidden paths, symlinks, blueprint files, and inline credentials are excluded. Use native automation/script/scene APIs where possible. Configuration writes also require accepted proposals and allow_management_writes.",
+                "example": "Default: empty. Whole-file rollback can replace later edits; review the new diff.",
+                "links": [
+                    (
+                        "Restricted configuration editing",
+                        "https://github.com/tobias-/hassos-mcp#restricted-configuration-files",
+                    )
+                ],
+            },
         ],
     },
     {

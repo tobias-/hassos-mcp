@@ -5,6 +5,7 @@ import re
 
 from .dependencies import Dependencies
 from .ha import HAError, entity
+from .privacy import ensure_no_credentials
 
 
 class Actions:
@@ -54,6 +55,7 @@ class Actions:
         if len(targets) > 50:
             raise ValueError("Select at most 50 explicit entities")
         data = data or {}
+        ensure_no_credentials(data, self.reviews.settings)
         if len(json.dumps(data, allow_nan=False).encode()) > 64 * 1024:
             raise ValueError("Action data exceeds 64 KiB")
         if any(
