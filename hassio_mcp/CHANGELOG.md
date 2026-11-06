@@ -1,3 +1,7 @@
+# 0.11.1
+
+- Add a read-only get_version tool reporting the running server's installed release version without contacting Home Assistant.
+
 # 0.11.0
 
 - Add explicitly allowlisted configuration-file read/edit/create/delete with accepted diffs and persistent backups.

@@ -1,13 +1,18 @@
 """Verify the built images over actual MCP stdio, without network or credentials."""
 
 import asyncio
+import json
 import sys
+import tomllib
+from pathlib import Path
 
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
 
 async def main(images):
+    project = Path(__file__).resolve().parents[1] / "hassio_mcp/pyproject.toml"
+    expected_version = tomllib.loads(project.read_text())["project"]["version"]
     for image in images:
         params = StdioServerParameters(
             command="docker",
@@ -28,6 +33,10 @@ async def main(images):
         ):
             await session.initialize()
             tools = {tool.name: tool for tool in (await session.list_tools()).tools}
+            assert tools["get_version"].annotations.readOnlyHint is True
+            result = await session.call_tool("get_version", {})
+            assert not result.isError
+            assert json.loads(result.content[0].text)["version"] == expected_version
             assert {
                 "get_config_file",
                 "propose_config_file_change",
@@ -85,7 +94,7 @@ async def main(images):
             result = await session.call_tool("list_suggestions", {})
             assert not result.isError and "Smoke test" in result.content[0].text
             print(
-                f"{image}: MCP initialization, discovery, suggestion box, and disabled-write guard passed"
+                f"{image}: version {expected_version}, MCP discovery, suggestion box, and disabled-write guards passed"
             )
 
 

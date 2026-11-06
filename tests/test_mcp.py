@@ -1,6 +1,7 @@
 import json
 import os
 import sys
+from importlib.metadata import version
 
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
@@ -26,6 +27,13 @@ async def test_real_stdio_discovery_and_missing_credentials(tmp_path):
         async with ClientSession(read, write) as session:
             await session.initialize()
             tools = {tool.name: tool for tool in (await session.list_tools()).tools}
+            assert tools["get_version"].annotations.readOnlyHint is True
+            result = await session.call_tool("get_version", {})
+            assert not result.isError
+            assert json.loads(result.content[0].text) == {
+                "name": "Hassos MCP",
+                "version": version("hassio-mcp"),
+            }
             assert {
                 "apply_automation_change",
                 "apply_blueprint_change",

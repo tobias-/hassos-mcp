@@ -1,4 +1,5 @@
 import logging
+from importlib.metadata import PackageNotFoundError, version
 from typing import Literal
 
 from mcp.server.fastmcp import FastMCP
@@ -17,6 +18,11 @@ from .influx import Influx
 from .resources import Resources
 from .review import ReviewStore
 from .suggestions import Suggestions
+
+try:
+    PLUGIN_VERSION = version("hassio-mcp")
+except PackageNotFoundError:
+    PLUGIN_VERSION = "unknown"
 
 READ = ToolAnnotations(
     readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False
@@ -85,6 +91,11 @@ def build_server(settings=None, ha=None):
             "Inspect management_change_status after uncertain failures; never automatically repeat an action."
         ),
     )
+
+    @mcp.tool(annotations=READ)
+    def get_version() -> dict:
+        """Report the running Hassos MCP server's installed release version, captured at process startup. Use to confirm an add-on/container update took effect. This is the plugin version, not Home Assistant's or the tunnel client's. Works offline without HA credentials; unknown means package metadata is unavailable."""
+        return {"name": "Hassos MCP", "version": PLUGIN_VERSION}
 
     @mcp.tool(annotations=READ)
     def list_suggestions(
