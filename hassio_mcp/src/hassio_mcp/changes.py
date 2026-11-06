@@ -45,19 +45,23 @@ class Changes:
     async def propose(
         self,
         automation_id: str,
-        config_yaml: str,
+        config_yaml: str | None,
         source_file: str | None = None,
         create: bool = False,
+        delete: bool = False,
     ):
         identifier(automation_id)
-        config = parse_automation(config_yaml, automation_id)
+        if delete and (create or config_yaml is not None):
+            raise ValueError("Delete must omit config_yaml and cannot create")
+        if not delete and config_yaml is None:
+            raise ValueError("Create/edit require config_yaml")
+        config = None if delete else parse_automation(config_yaml, automation_id)
+        operation = "delete" if delete else "create" if create else "update"
         if source_file:
             if create:
-                raise ValueError(
-                    "Create new automations through the UI-managed API; YAML files support existing IDs"
-                )
+                await self._ensure_id_absent(automation_id)
             before, after, old_config = self.files.prepare(
-                source_file, automation_id, config
+                source_file, automation_id, config, create=create, delete=delete
             )
             # Review the exact file rewrite, including any formatting changes.
             old_config, new_config = before, after
@@ -88,7 +92,7 @@ class Changes:
             before, after = canonical(current), canonical(config)
             old_config, new_config = (
                 dump(current) if current is not None else "",
-                dump(config),
+                "" if delete else dump(config),
             )
         if before == after:
             raise ValueError("No change proposed")
@@ -102,6 +106,7 @@ class Changes:
         )
         proposal_id = secrets.token_urlsafe(24)
         payload = {
+            "operation": operation,
             "automation_id": automation_id,
             "source_file": source_file,
             "before": before,
@@ -115,13 +120,22 @@ class Changes:
                 (proposal_id, time.time(), canonical(payload)),
             )
         return {
+            "operation": operation,
             "proposal_id": proposal_id,
             "digest": payload["digest"],
             "diff": diff,
             "expires_in_seconds": 1800,
             "approval_required": True,
-            "instructions": "Show this diff and explain its effects. Wait for explicit user approval before calling apply_automation_change with this exact proposal ID and digest. Saving reloads automations and may activate their triggers.",
+            "instructions": "Show this diff and explain its effects, including deletion if requested. Wait for explicit user approval before calling apply_automation_change with this exact proposal ID and digest. Configuration changes can reload automations, stop runs, or activate triggers. Enable/disable/trigger/inspect/reload have separate directly authorized tools and do not authorize this configuration change.",
         }
+
+    async def _ensure_id_absent(self, automation_id):
+        if await self.ha.automation(automation_id) is not None or any(
+            str(s.get("attributes", {}).get("id")) == automation_id
+            for s in await self.ha.states()
+            if s["entity_id"].startswith("automation.")
+        ):
+            raise ValueError("Automation ID already exists; choose a new ID")
 
     async def apply(self, proposal_id, approved_digest):
         if not self.settings.writes_enabled:
@@ -169,9 +183,12 @@ class Changes:
                             raise ValueError(
                                 "Automation ID now exists in YAML; propose again"
                             )
-                    await self.ha.save_automation(
-                        payload["automation_id"], json.loads(payload["after"])
-                    )
+                    if payload.get("operation") == "delete":
+                        await self.ha.delete_automation(payload["automation_id"])
+                    else:
+                        await self.ha.save_automation(
+                            payload["automation_id"], json.loads(payload["after"])
+                        )
                     saved = await self.ha.automation(payload["automation_id"])
                     if canonical(saved) != payload["after"]:
                         raise RuntimeError(
@@ -190,9 +207,10 @@ class Changes:
                 )
             return {
                 "status": "applied",
+                "operation": payload.get("operation", "update"),
                 "automation_id": payload["automation_id"],
                 "backup_id": proposal_id,
-                "note": "Configuration saved. Inspect the automation state and traces to verify runtime behavior.",
+                "note": "Configuration change applied. Inspect the automation state and traces to verify runtime behavior. Deletion may remove the entity; YAML deletion does not delete unrelated package content.",
             }
 
     async def _apply_file(self, payload):
@@ -203,6 +221,8 @@ class Changes:
             raise ValueError(
                 "Existing HA configuration is invalid; fix it before editing"
             )
+        if payload.get("operation") == "create":
+            await self._ensure_id_absent(payload["automation_id"])
         if path.read_text() != payload["before"]:
             raise ValueError("File changed during validation; propose again")
         atomic_write(path, payload["after"])
@@ -233,6 +253,7 @@ class Changes:
             "status": row[1],
             "created": row[0],
             "automation_id": data["automation_id"],
+            "operation": data.get("operation", "update"),
             "source_file": data["source_file"],
             "diff": data["diff"],
             "digest": data["digest"],

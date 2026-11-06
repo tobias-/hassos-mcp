@@ -4,6 +4,11 @@ Connect ChatGPT to Home Assistant through an outbound Secure MCP Tunnel.
 Read entity values, Recorder/InfluxDB history, automations, and execution traces;
 review and approve automation edits in ChatGPT before applying them.
 
+Automation enable/disable/trigger/inspect/reload are preauthorized direct tools,
+including when configuration writes are disabled. Create/edit/delete still need
+explicit acceptance of a proposal. Update to 0.5.0 and refresh ChatGPT's tool list;
+allow direct controls while keeping all apply tools on ask every time.
+
 Blueprints support listing, reading, and proposed create/update/delete changes.
 Every modification requires explicit acceptance of the exact diff, followed by
 `apply_blueprint_change`. Set ChatGPT to confirm every apply, then enable the

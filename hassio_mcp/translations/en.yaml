@@ -28,11 +28,11 @@ configuration:
       config mounted, which can be read-only for blueprint API writes. Default: off. Independent of automation editing
       permission. Setup links: open Web UI or the Documentation tab. https://github.com/tobias-/hassos-mcp#blueprint-crud-and-acceptance'
   allow_automation_writes:
-    name: Allow approved automation edits
-    description: 'Keep off during setup. To enable editing, first configure ChatGPT to ask every time for apply_automation_change,
-      then turn this on and restart. Review the exact proposed diff before approving. Saving may activate automation
-      triggers. Default: off. Read and debugging tools still work. Setup links: open Web UI or the Documentation
-      tab. https://developers.openai.com/api/docs/guides/custom-mcp-server'
+    name: Allow accepted automation configuration changes
+    description: 'Controls configuration create, edit, and delete only. First set ChatGPT to ask every time for
+      apply_automation_change, then enable this and restart. Review the exact diff before accepting. Enable/disable/trigger/inspect/reload
+      use separate direct tools and do not require this switch or a proposal. Default: off. Direct automation controls
+      remain available. Setup links: open Web UI or the Documentation tab. https://developers.openai.com/api/docs/guides/custom-mcp-server'
   yaml_files:
     name: Allowed automation YAML files
     description: 'Leave empty for UI-managed automations. To edit package YAML, add the existing file paths relative

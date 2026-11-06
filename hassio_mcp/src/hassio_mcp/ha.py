@@ -127,6 +127,11 @@ class HomeAssistant:
             body=config,
         )
 
+    async def delete_automation(self, automation_id):
+        return await self.request(
+            "DELETE", "/api/config/automation/config/" + identifier(automation_id)
+        )
+
     async def check_config(self):
         return await self.request("POST", "/api/config/core/check_config", body={})
 

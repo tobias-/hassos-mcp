@@ -106,14 +106,26 @@ class AutomationFiles:
             )
         return source, document, items
 
-    def prepare(self, name, automation_id, new_config=None):
+    def prepare(
+        self, name, automation_id, new_config=None, *, create=False, delete=False
+    ):
         source, document, items = self.load(name)
         matches = [
             i for i, item in enumerate(items) if str(item.get("id")) == automation_id
         ]
+        if create:
+            if matches:
+                raise ValueError("Automation ID already exists in this file")
+            if new_config is None or delete:
+                raise ValueError("Create needs a configuration and cannot delete")
+            items.append(new_config)
+            return source, dump(document), ""
         if len(matches) != 1:
             raise ValueError("Expected exactly one existing automation ID in the file")
         old = dump(items[matches[0]])
+        if delete:
+            del items[matches[0]]
+            return source, dump(document), old
         if new_config is None:
             return old
         # Update the existing mapping to retain comments on unchanged keys.

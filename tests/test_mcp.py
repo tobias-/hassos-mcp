@@ -26,7 +26,16 @@ async def test_real_stdio_discovery_and_missing_credentials(tmp_path):
         async with ClientSession(read, write) as session:
             await session.initialize()
             tools = {tool.name: tool for tool in (await session.list_tools()).tools}
-            assert len(tools) == 22
+            assert len(tools) == 29
+            for name in (
+                "enable_automation",
+                "disable_automation",
+                "trigger_automation",
+                "reload_automations",
+            ):
+                assert tools[name].annotations.readOnlyHint is False
+                assert "approved_digest" not in tools[name].inputSchema["properties"]
+            assert tools["inspect_automation"].annotations.readOnlyHint is True
             assert tools["get_blueprint"].annotations.readOnlyHint is True
             assert tools["apply_blueprint_change"].annotations.destructiveHint is True
             assert tools["apply_blueprint_change"].annotations.readOnlyHint is False

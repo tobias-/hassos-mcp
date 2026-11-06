@@ -8,13 +8,16 @@ A private MCP server for ChatGPT, running as a local HAOS app/add-on or Docker C
 - Read Recorder state history and long-term statistics, subject to retention and exclusions.
 - Read InfluxDB 1.x or 2.x history through bounded queries, including aggregates.
 - Read loaded UI/YAML/blueprint automation configuration, stored execution traces, and error logs.
-- Propose and review exact changes, then create/edit UI automations or edit existing automations in explicitly allowlisted YAML files.
+- List/inspect/enable/disable/trigger/reload automations directly, without a proposal or additional agreement.
+- Propose and review exact changes, then create/edit/delete UI automations or entries in existing explicitly allowlisted YAML files.
 - Save and review persistent suggestions for missing capabilities and observed bugs.
 - List/read automation, script, and template blueprints; propose create/update/delete and apply only after explicit acceptance.
 
-No generic service-call, automation-delete, toggle, or manually-trigger-automation tool is exposed. Saving an automation or updating a blueprint can activate behavior, so both apply tools are marked destructive and non-read-only.
+Automation controls have dedicated tools with specific entity targets. Configuration changes use reviewed proposals. Mutating controls and apply tools are truthfully marked non-read-only; tool annotations do not bypass client permission settings.
 
 ## Access and approval model
+
+Automation enable, disable, trigger, inspect, and reload are preauthorized. The server and its LLM instructions require no proposal or additional agreement for those operations. Configure your client's permissions to allow those tools directly while keeping both `apply_automation_change` and `apply_blueprint_change` on **ask every time**. The server cannot override ChatGPT's own confirmation policy. The write switches below govern configuration changes only, not these direct controls.
 
 This deployment assumes a **single-user Platform organization and private ChatGPT workspace/app**. Access is enforced by OpenAI tunnel membership and permissions, not by an email address supplied to an MCP tool. Associate the tunnel only with your personal organization/workspace. Do not share the app or tunnel. If either context gains other users, revisit authentication before granting them access; this server does not independently authenticate ChatGPT user IDs.
 
@@ -82,6 +85,25 @@ Both tools work with automation writes disabled and HA unavailable. Submitting i
 After upgrading to 0.3.0, refresh the plugin's tools in ChatGPT to discover the two new tools.
 
 ## YAML editing and recovery limits
+
+Automation configuration supports create, update, and delete after acceptance. `propose_automation_delete` prepares a deletion; `apply_automation_change` applies its reviewed digest. YAML operations modify only the selected entry in an existing allowlisted automation list or package, leaving other entries and package sections intact. New YAML entries require a unique ID and an existing allowlisted destination; arbitrary new configuration files are not created by these tools.
+
+## Direct automation controls
+
+| Tool | Behavior |
+| --- | --- |
+| `list_automations` | Discover automation entity IDs, enabled state, attributes and timestamps. |
+| `inspect_automation` | Read state, loaded configuration, and optional trace summaries. |
+| `enable_automation` | Enable one automation's triggers. |
+| `disable_automation` | Disable one automation; `stop_actions=true` stops running actions, or use false to let them finish. |
+| `trigger_automation` | Run one automation, even when disabled; conditions are checked unless `skip_condition=true`. |
+| `reload_automations` | Reload existing automation configuration globally, without writing new configuration. |
+
+These controls work with `allow_automation_writes=false`. They never approve a pending configuration proposal. Trigger/reload outcomes may be uncertain on network failures; inspect state/traces before retrying. A completed service request is not proof that every action succeeded. Reloading can stop runs and reset waits for changed automations. See [trigger semantics](https://www.home-assistant.io/actions/automation.trigger/), [disable semantics](https://www.home-assistant.io/actions/automation.turn_off/), and [reload behavior](https://www.home-assistant.io/actions/automation.reload/).
+
+Update to **0.5.0** and refresh ChatGPT's tool list to discover these controls.
+
+## Configuration validation and recovery
 
 UI-managed edits go through Home Assistant's config API, which validates and saves `automations.yaml` and schedules a reload. Direct file editing accepts automation-list files or packages with a top-level `automation` list, requires an existing unique `id`, preserves tags/comments, and shows the complete file diff. It does not expand arbitrary includes or expose `secrets.yaml`. Automation tools edit a blueprint consumer's `use_blueprint` inputs; use the separate blueprint tools below to modify the shared template.
 

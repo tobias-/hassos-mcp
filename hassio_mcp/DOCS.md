@@ -54,7 +54,7 @@ Blank = use HAOS automatic authentication.
 
 ## Automation and blueprint changes
 
-Reading values, history, automation configuration, and traces works with writes disabled. Enable editing only after ChatGPT is set to ask for confirmation every time it applies a change.
+Automation enable, disable, trigger, inspect, and reload are directly authorized and work even with configuration writes disabled. Configuration create/edit/delete and blueprint changes require explicit acceptance of each proposal. Configure ChatGPT permissions separately for direct controls and apply tools.
 
 ### Allow explicitly accepted blueprint changes
 
@@ -66,13 +66,13 @@ Default: off. Independent of automation editing permission.
 
 [Blueprint review and recovery](https://github.com/tobias-/hassos-mcp#blueprint-crud-and-acceptance) · [Home Assistant blueprint schema](https://www.home-assistant.io/docs/blueprint/schema/)
 
-### Allow approved automation edits
+### Allow accepted automation configuration changes
 
 Configuration field: `allow_automation_writes`
 
-Keep off during setup. To enable editing, first configure ChatGPT to ask every time for apply_automation_change, then turn this on and restart. Review the exact proposed diff before approving. Saving may activate automation triggers.
+Controls configuration create, edit, and delete only. First set ChatGPT to ask every time for apply_automation_change, then enable this and restart. Review the exact diff before accepting. Enable/disable/trigger/inspect/reload use separate direct tools and do not require this switch or a proposal.
 
-Default: off. Read and debugging tools still work.
+Default: off. Direct automation controls remain available.
 
 [Connect the app in ChatGPT](https://developers.openai.com/api/docs/guides/custom-mcp-server) · [How approval and recovery work](https://github.com/tobias-/hassos-mcp#access-and-approval-model)
 

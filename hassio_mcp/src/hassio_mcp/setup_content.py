@@ -85,7 +85,7 @@ GROUPS = [
         "id": "automations",
         "title": "Automation and blueprint changes",
         "badge": "Optional",
-        "intro": "Reading values, history, automation configuration, and traces works with writes disabled. Enable editing only after ChatGPT is set to ask for confirmation every time it applies a change.",
+        "intro": "Automation enable, disable, trigger, inspect, and reload are directly authorized and work even with configuration writes disabled. Configuration create/edit/delete and blueprint changes require explicit acceptance of each proposal. Configure ChatGPT permissions separately for direct controls and apply tools.",
         "fields": [
             {
                 "key": "allow_blueprint_writes",
@@ -106,10 +106,10 @@ GROUPS = [
             },
             {
                 "key": "allow_automation_writes",
-                "name": "Allow approved automation edits",
+                "name": "Allow accepted automation configuration changes",
                 "required": False,
-                "help": "Keep off during setup. To enable editing, first configure ChatGPT to ask every time for apply_automation_change, then turn this on and restart. Review the exact proposed diff before approving. Saving may activate automation triggers.",
-                "example": "Default: off. Read and debugging tools still work.",
+                "help": "Controls configuration create, edit, and delete only. First set ChatGPT to ask every time for apply_automation_change, then enable this and restart. Review the exact diff before accepting. Enable/disable/trigger/inspect/reload use separate direct tools and do not require this switch or a proposal.",
+                "example": "Default: off. Direct automation controls remain available.",
                 "links": [
                     (
                         "Connect the app in ChatGPT",

@@ -1,3 +1,11 @@
+# 0.5.0
+
+- Add direct automation enable, disable, trigger, inspect, and reload tools without a proposal or additional acceptance step.
+- Keep configuration create/update/delete and all blueprint writes behind explicit acceptance.
+- Add reviewed automation deletion through the UI API or an allowlisted YAML list.
+- Support adding new automations to existing allowlisted YAML files.
+- Add automation discovery and combined state/configuration/trace inspection.
+
 # 0.4.0
 
 - Add blueprint list/read and reviewed create/update/delete for automation, script, and template domains.

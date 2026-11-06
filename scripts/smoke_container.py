@@ -28,7 +28,15 @@ async def main(images):
         ):
             await session.initialize()
             tools = {tool.name: tool for tool in (await session.list_tools()).tools}
-            assert len(tools) == 22
+            assert len(tools) == 29
+            for name in (
+                "enable_automation",
+                "disable_automation",
+                "trigger_automation",
+                "reload_automations",
+            ):
+                assert tools[name].annotations.readOnlyHint is False
+                assert "approved_digest" not in tools[name].inputSchema["properties"]
             assert tools["apply_blueprint_change"].annotations.destructiveHint
             assert tools["apply_automation_change"].annotations.destructiveHint
             result = await session.call_tool(
