@@ -1,0 +1,44 @@
+name: Home Assistant Private MCP
+version: "0.1.0"
+slug: hassio_mcp
+url: https://github.com/tobias-/hassio-mcp
+description: Private ChatGPT access to states, history, traces and reviewed automation edits
+arch: [amd64, aarch64]
+startup: application
+boot: auto
+init: false
+homeassistant_api: true
+map:
+  - type: homeassistant_config
+    read_only: false
+options:
+  tunnel_id: ""
+  openai_api_key: ""
+  ha_url: "http://homeassistant:8123"
+  ha_token: ""
+  allow_automation_writes: false
+  yaml_files: []
+  influx_url: ""
+  influx_version: "1"
+  influx_database: homeassistant
+  influx_user: ""
+  influx_password: ""
+  influx_token: ""
+  influx_org: ""
+  influx_bucket: homeassistant
+schema:
+  tunnel_id: str
+  openai_api_key: password
+  ha_url: str
+  ha_token: password
+  allow_automation_writes: bool
+  yaml_files:
+    - str
+  influx_url: str
+  influx_version: list(1|2)
+  influx_database: str
+  influx_user: str
+  influx_password: password
+  influx_token: password
+  influx_org: str
+  influx_bucket: str

@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hassio-mcp"
+version = "0.1.0"
+description = "Private Home Assistant MCP with reviewed automation changes"
+requires-python = ">=3.12"
+dependencies = ["mcp==1.30.0", "httpx==0.28.1", "websockets==15.0.1", "ruamel.yaml==0.18.17"]
+
+[project.scripts]
+hassio-mcp = "hassio_mcp.server:main"
+hassio-mcp-start = "hassio_mcp.launcher:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

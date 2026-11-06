@@ -1,0 +1,22 @@
+services:
+  hassio-mcp:
+    build:
+      context: ./hassio_mcp
+      target: compose
+    restart: unless-stopped
+    env_file: .env.local
+    volumes:
+      - mcp-data:/data
+      # Optional, only for editing allowlisted YAML package files:
+      # - /absolute/path/to/ha-config:/homeassistant:rw
+      # Optional HTTPS client certificates:
+      # - ./secrets:/run/secrets:ro
+    read_only: true
+    tmpfs:
+      - /tmp:mode=1777,size=64m
+      - /home/mcp:uid=10001,gid=10001,mode=700,size=16m
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    # No host ports: the tunnel connects outbound and reaches MCP over stdio.
+volumes:
+  mcp-data:
