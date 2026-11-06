@@ -13,3 +13,4 @@ data/
 secrets/
 *.pem
 *.key
+/hassos-mcp-feature-request.md
