@@ -72,6 +72,8 @@ def main():
             "yaml_files": "HA_YAML_FILES",
             "config_files": "HA_CONFIG_FILES",
             "esphome_config_dir": "ESPHOME_CONFIG_DIR",
+            "esphome_worker_url": "ESPHOME_WORKER_URL",
+            "esphome_worker_token": "ESPHOME_WORKER_TOKEN",
         }
         for key, env in mapping.items():
             if key in options:

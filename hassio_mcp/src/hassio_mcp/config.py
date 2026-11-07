@@ -13,6 +13,8 @@ class Settings:
     data_dir: Path = Path("data")
     config_dir: Path = Path("/homeassistant")
     esphome_config_dir: str = ""
+    esphome_worker_url: str = ""
+    esphome_worker_token: str = field(default="", repr=False)
     yaml_files: tuple[str, ...] = ()
     config_files: tuple[str, ...] = ()
     writes_enabled: bool = False
@@ -39,6 +41,8 @@ class Settings:
             data_dir=Path(env.get("DATA_DIR", "data")),
             config_dir=Path(env.get("HA_CONFIG_DIR", "/homeassistant")),
             esphome_config_dir=env.get("ESPHOME_CONFIG_DIR", ""),
+            esphome_worker_url=env.get("ESPHOME_WORKER_URL", ""),
+            esphome_worker_token=env.get("ESPHOME_WORKER_TOKEN", ""),
             yaml_files=tuple(json.loads(env.get("HA_YAML_FILES", "[]"))),
             config_files=tuple(json.loads(env.get("HA_CONFIG_FILES", "[]"))),
             writes_enabled=env.get("ALLOW_AUTOMATION_WRITES", "false").lower()

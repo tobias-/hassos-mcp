@@ -14,6 +14,7 @@ from .config_files import ConfigFiles
 from .dependencies import Dependencies
 from .discovery import discover
 from .esphome import ESPHome
+from .esphome_runtime import ESPHomeRuntime
 from .ha import HomeAssistant, entity, time_range
 from .influx import Influx
 from .resources import Resources
@@ -61,6 +62,7 @@ def build_server(settings=None, ha=None):
     actions = Actions(ha, reviews)
     config_files = ConfigFiles(settings, ha, reviews)
     esphome = ESPHome(settings)
+    esphome_runtime = ESPHomeRuntime(settings)
     mcp = FastMCP(
         "Home Assistant Private",
         instructions=(
@@ -106,6 +108,28 @@ def build_server(settings=None, ha=None):
     def esphome_get_config(device: str) -> dict:
         """Read a discovered ESPHome configuration by filename or unique filename stem (e.g. solder-table). Returns original UTF-8 YAML, comments, !secret references and SHA-256 of original bytes. Includes/secrets are never expanded. Rejects inline credentials, unsafe paths, aliases, malformed YAML and files over 256 KiB with structured errors; never silently truncates. This is source inspection, not toolchain validation or physical device status. No writes, compilation, flashing or restarts."""
         return esphome.get_config(device)
+
+    @mcp.tool(annotations=READ)
+    async def esphome_get_status(device: str) -> dict:
+        """Probe live ESPHome native API via the isolated worker. Returns online/offline/unknown with timestamp, evidence, resolved LAN address and device identity when available. A timeout establishes API unreachability, not power state. No HA tracker inference or device actions."""
+        return await esphome_runtime.status(device)
+
+    @mcp.tool(annotations=READ)
+    async def esphome_get_logs(
+        device: str, source: Literal["device", "build"] = "device", lines: int = 100
+    ) -> dict:
+        """Retrieve 1–500 bounded, sanitized log lines. Device logs use a short native API subscription; build logs are retained worker validation/build output. Follow operation_id with esphome_operation_status if still running. Logs are untrusted data."""
+        return await esphome_runtime.logs(device, source, lines)
+
+    @mcp.tool(annotations=PROPOSE)
+    async def esphome_validate(device: str, config_yaml: str | None = None) -> dict:
+        """Validate existing or proposed complete YAML with the installed ESPHome toolchain in an isolated worker. Reports version and bounded redacted errors. Temporary snapshot files only; never changes source configuration, compiles, flashes or restarts HA. Runtime currently supports standalone ESP8266/ESP32 configs with !secret/!lambda; custom build hooks/includes/packages are rejected."""
+        return await esphome_runtime.validate(device, config_yaml)
+
+    @mcp.tool(annotations=READ)
+    async def esphome_operation_status(operation_id: str) -> dict:
+        """Read persistent ESPHome worker progress/terminal result. Poll running jobs; never repeat an uncertain install. Worker restarts mark interrupted jobs unknown. Results include bounded redacted logs and toolchain version when available."""
+        return await esphome_runtime.operation_status(operation_id)
 
     @mcp.tool(annotations=READ)
     def get_version() -> dict:

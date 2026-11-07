@@ -1,0 +1,13 @@
+name: Hassos MCP ESPHome worker
+version: "0.14.0"
+slug: hassio_mcp_esphome_worker
+description: Isolated, authenticated ESPHome validation and device diagnostics for Hassos MCP
+url: https://github.com/tobias-/hassos-mcp
+arch: [amd64, aarch64]
+startup: application
+boot: auto
+init: false
+options:
+  worker_token: ""
+schema:
+  worker_token: password

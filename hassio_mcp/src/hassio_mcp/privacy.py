@@ -16,6 +16,7 @@ def ensure_no_credentials(value, settings):
             settings.ha_token,
             settings.influx_password,
             settings.influx_token,
+            settings.esphome_worker_token,
             os.environ.get("OPENAI_API_KEY"),
             os.environ.get("CONTROL_PLANE_API_KEY"),
             os.environ.get("SUPERVISOR_TOKEN"),

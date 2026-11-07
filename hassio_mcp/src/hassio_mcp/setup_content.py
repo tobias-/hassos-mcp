@@ -173,6 +173,32 @@ GROUPS = [
         "intro": "Find stored device configurations even when the hardware is offline. This only inspects local YAML; it does not check device connectivity or run ESPHome Builder.",
         "fields": [
             {
+                "key": "esphome_worker_url",
+                "name": "ESPHome worker URL",
+                "required": False,
+                "help": "Install the Hassos MCP ESPHome worker add-on from this repository. Copy its Hostname from Information and enter http://HOSTNAME:6053. This is a separate pinned ESPHome runtime, not Builder's UI URL. Compose: enable the esphome profile and use http://esphome-worker:6053. The worker needs LAN access to devices and internet for compiler dependencies; no HA config mount or Docker socket is used.",
+                "example": "Blank disables runtime operations; source discovery/reading still work.",
+                "links": [
+                    (
+                        "Worker setup",
+                        "https://github.com/tobias-/hassos-mcp/blob/master/esphome_worker/README.md",
+                    )
+                ],
+            },
+            {
+                "key": "esphome_worker_token",
+                "name": "ESPHome worker authentication token",
+                "required": False,
+                "help": "Generate a new random token with openssl rand -hex 32 and save the same value in this field and the worker add-on's worker_token field. Compose uses ESPHOME_WORKER_TOKEN in .env.local. Keep the worker on a trusted private network; use HTTPS when crossing an untrusted network. Never use a Home Assistant or OpenAI API key here.",
+                "example": "At least 32 characters. Do not paste it into chat or commit it.",
+                "links": [
+                    (
+                        "Worker authentication and isolation",
+                        "https://github.com/tobias-/hassos-mcp/blob/master/esphome_worker/README.md",
+                    )
+                ],
+            },
+            {
                 "key": "esphome_config_dir",
                 "name": "ESPHome configuration directory",
                 "required": False,

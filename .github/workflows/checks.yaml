@@ -18,8 +18,8 @@ jobs:
             hassio_mcp/requirements.lock
             requirements-dev.txt
       - run: python -m pip install -r requirements-dev.txt -e ./hassio_mcp
-      - run: python -m ruff check hassio_mcp/src tests scripts
-      - run: python -m ruff format --check hassio_mcp/src tests scripts
+      - run: python -m ruff check hassio_mcp/src esphome_worker tests scripts
+      - run: python -m ruff format --check hassio_mcp/src esphome_worker tests scripts
       - run: python -m pytest -q
       - run: python scripts/package_addon.py
       - run: docker build --target compose -t hassio-mcp:ci hassio_mcp

@@ -166,7 +166,7 @@ Read a discovered file with `esphome_get_config({"device":"solder-table.yaml"})`
 
 Inline passwords, API encryption keys, Wi-Fi identifiers, usernames, credential URLs, known runtime tokens and other recognized sensitive fields cause `ACCESS_DENIED` without returning any YAML. Use [ESPHome secrets](https://esphome.io/guides/yaml/#secrets-and-the-secretsyaml-file) for these values. Do not put arbitrary secrets in comments or lambdas: detection cannot identify every unlabeled secret. The tool never opens secrets files or resolves `!secret` references. It rejects rather than returning a redacted document that could be mistaken for a lossless replacement.
 
-This implements the specification's required **Phase 1** only. Status/log retrieval, controlled toolchain validation, approved config writes, compilation and artifact-specific approved OTA remain later phases. No ESPHome compiler/runtime is installed and no firmware is changed. After updating/restarting the add-on, refresh the ChatGPT tools, check `get_version`, enumerate all pages, and inspect the candidate controllers' GPIO and relay definitions before planning firmware work.
+Phase 2 adds `esphome_get_status`, `esphome_get_logs`, `esphome_validate` and `esphome_operation_status` through the [separate ESPHome worker](esphome_worker/README.md). Install/configure that worker for actual toolchain execution; a configuration mount alone does not supply a compiler. Discovery and source reading still work without it. After updating/restarting the add-on, refresh ChatGPT's tools, enumerate all pages and inspect the candidate controllers' GPIO/relay definitions before firmware work.
 
 ## Dependency inspection
 

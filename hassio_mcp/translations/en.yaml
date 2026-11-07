@@ -52,6 +52,20 @@ configuration:
       Configuration writes also require accepted proposals and allow_management_writes. Default: empty. Whole-file
       rollback can replace later edits; review the new diff. Setup links: open Web UI or the Documentation tab.
       https://github.com/tobias-/hassos-mcp#restricted-configuration-files'
+  esphome_worker_url:
+    name: ESPHome worker URL
+    description: "Install the Hassos MCP ESPHome worker add-on from this repository. Copy its Hostname from Information
+      and enter http://HOSTNAME:6053. This is a separate pinned ESPHome runtime, not Builder's UI URL. Compose:
+      enable the esphome profile and use http://esphome-worker:6053. The worker needs LAN access to devices and
+      internet for compiler dependencies; no HA config mount or Docker socket is used. Blank disables runtime operations;
+      source discovery/reading still work. Setup links: open Web UI or the Documentation tab. https://github.com/tobias-/hassos-mcp/blob/master/esphome_worker/README.md"
+  esphome_worker_token:
+    name: ESPHome worker authentication token
+    description: "Generate a new random token with openssl rand -hex 32 and save the same value in this field and
+      the worker add-on's worker_token field. Compose uses ESPHOME_WORKER_TOKEN in .env.local. Keep the worker on
+      a trusted private network; use HTTPS when crossing an untrusted network. Never use a Home Assistant or OpenAI
+      API key here. At least 32 characters. Do not paste it into chat or commit it. Setup links: open Web UI or
+      the Documentation tab. https://github.com/tobias-/hassos-mcp/blob/master/esphome_worker/README.md"
   esphome_config_dir:
     name: ESPHome configuration directory
     description: "Normally leave blank on HAOS: the app uses the esphome subdirectory of its Home Assistant configuration

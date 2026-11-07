@@ -1,3 +1,10 @@
+# 0.14.0
+
+- Implement ESPHome Phase 2: live native API status, bounded device/build logs, and toolchain validation of current/proposed YAML.
+- Add an authenticated companion HAOS/Compose worker pinned to ESPHome 2026.10.2, without HA mounts or Docker socket access.
+- Persist job results, enforce time/resource/output bounds, and forward only referenced secrets in private snapshots.
+- Add operation-status polling, runtime scope restrictions and linked worker setup instructions.
+
 # 0.13.0
 
 - Add esphome_get_config for exact UTF-8 YAML reads with original-byte SHA-256, timestamps and explicit redacted/truncated flags.

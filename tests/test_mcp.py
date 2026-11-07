@@ -41,6 +41,13 @@ async def test_real_stdio_discovery_and_missing_credentials(tmp_path):
             assert discovery["items"][0]["device"] == "solder-table.yaml"
             assert discovery["items"][0]["status"] == "unknown"
             assert tools["esphome_get_config"].annotations.readOnlyHint is True
+            for name in (
+                "esphome_get_status",
+                "esphome_get_logs",
+                "esphome_operation_status",
+            ):
+                assert tools[name].annotations.readOnlyHint is True
+            assert tools["esphome_validate"].annotations.destructiveHint is False
             result = await session.call_tool(
                 "esphome_get_config", {"device": "solder-table"}
             )
