@@ -1,3 +1,9 @@
+# 0.15.0
+
+- Implement ESPHome Phase 3: toolchain-validated immutable config proposals, exact diffs/content hashes, separate write permission and explicit acceptance.
+- Reject stale source/secret snapshots, expired/mismatched/replayed proposals; preserve backups and atomically replace source with existing permissions.
+- Add persistent proposal inspection and separately reviewed rollback. Uncertain writes are consumed and never retried automatically.
+
 # 0.14.0
 
 - Implement ESPHome Phase 2: live native API status, bounded device/build logs, and toolchain validation of current/proposed YAML.

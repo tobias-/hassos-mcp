@@ -173,6 +173,19 @@ GROUPS = [
         "intro": "Find stored device configurations even when the hardware is offline. This only inspects local YAML; it does not check device connectivity or run ESPHome Builder.",
         "fields": [
             {
+                "key": "allow_esphome_config_writes",
+                "name": "Allow accepted ESPHome configuration changes",
+                "required": False,
+                "help": "First configure ChatGPT to ask every time for esphome_apply_config_change, then enable this switch. Each change needs toolchain validation, exact diff review and explicit acceptance. The selected ESPHome directory must be writable. Applying only replaces source YAML; it never compiles, flashes or restarts HA/Builder. Backups are retained with the proposal; rollback requires fresh acceptance.",
+                "example": "Default: off. Independent of Home Assistant management writes and OTA permission.",
+                "links": [
+                    (
+                        "ESPHome review and recovery",
+                        "https://github.com/tobias-/hassos-mcp#esphome-configuration-inspection",
+                    )
+                ],
+            },
+            {
                 "key": "esphome_worker_url",
                 "name": "ESPHome worker URL",
                 "required": False,

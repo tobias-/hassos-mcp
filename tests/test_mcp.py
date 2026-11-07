@@ -48,6 +48,16 @@ async def test_real_stdio_discovery_and_missing_credentials(tmp_path):
             ):
                 assert tools[name].annotations.readOnlyHint is True
             assert tools["esphome_validate"].annotations.destructiveHint is False
+            assert (
+                tools["esphome_apply_config_change"].annotations.destructiveHint is True
+            )
+            result = await session.call_tool(
+                "esphome_apply_config_change",
+                {"proposal_id": "test", "approved_digest": "test"},
+            )
+            assert (
+                json.loads(result.content[0].text)["error"]["code"] == "ACCESS_DENIED"
+            )
             result = await session.call_tool(
                 "esphome_get_config", {"device": "solder-table"}
             )

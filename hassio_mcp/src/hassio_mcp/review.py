@@ -80,8 +80,14 @@ class ReviewStore:
             raise ValueError("Unknown management proposal")
         return {"created": row[0], "status": row[1], **json.loads(row[2])}
 
-    async def apply(self, proposal_id, approved_digest, kind, perform):
-        if not self.settings.management_writes_enabled:
+    async def apply(self, proposal_id, approved_digest, kind, perform, *, enabled=None):
+        if not (
+            self.settings.management_writes_enabled if enabled is None else enabled
+        ):
+            if enabled is not None:
+                raise ValueError(
+                    "This operation's write permission is disabled; configure client confirmation before enabling it"
+                )
             raise ValueError(
                 "Management writes are disabled; configure confirmation for all management apply tools, then enable ALLOW_MANAGEMENT_WRITES"
             )

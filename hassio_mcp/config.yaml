@@ -1,5 +1,5 @@
 name: Home Assistant Private MCP
-version: "0.14.0"
+version: "0.15.0"
 slug: hassio_mcp
 url: https://github.com/tobias-/hassos-mcp
 description: Private ChatGPT access to states, history, traces and reviewed automation edits
@@ -28,6 +28,7 @@ options:
   esphome_config_dir: ""
   esphome_worker_url: ""
   esphome_worker_token: ""
+  allow_esphome_config_writes: false
   influx_url: ""
   influx_version: "1"
   influx_database: homeassistant
@@ -51,6 +52,7 @@ schema:
   esphome_config_dir: str
   esphome_worker_url: str
   esphome_worker_token: password
+  allow_esphome_config_writes: bool
   influx_url: str
   influx_version: list(1|2)
   influx_database: str

@@ -74,6 +74,7 @@ def main():
             "esphome_config_dir": "ESPHOME_CONFIG_DIR",
             "esphome_worker_url": "ESPHOME_WORKER_URL",
             "esphome_worker_token": "ESPHOME_WORKER_TOKEN",
+            "allow_esphome_config_writes": "ALLOW_ESPHOME_CONFIG_WRITES",
         }
         for key, env in mapping.items():
             if key in options:

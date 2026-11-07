@@ -110,6 +110,16 @@ Default: empty. Whole-file rollback can replace later edits; review the new diff
 
 Find stored device configurations even when the hardware is offline. This only inspects local YAML; it does not check device connectivity or run ESPHome Builder.
 
+### Allow accepted ESPHome configuration changes
+
+Configuration field: `allow_esphome_config_writes`
+
+First configure ChatGPT to ask every time for esphome_apply_config_change, then enable this switch. Each change needs toolchain validation, exact diff review and explicit acceptance. The selected ESPHome directory must be writable. Applying only replaces source YAML; it never compiles, flashes or restarts HA/Builder. Backups are retained with the proposal; rollback requires fresh acceptance.
+
+Default: off. Independent of Home Assistant management writes and OTA permission.
+
+[ESPHome review and recovery](https://github.com/tobias-/hassos-mcp#esphome-configuration-inspection)
+
 ### ESPHome worker URL
 
 Configuration field: `esphome_worker_url`
