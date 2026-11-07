@@ -103,6 +103,11 @@ def build_server(settings=None, ha=None):
         return esphome.list_devices(limit, offset)
 
     @mcp.tool(annotations=READ)
+    def esphome_get_config(device: str) -> dict:
+        """Read a discovered ESPHome configuration by filename or unique filename stem (e.g. solder-table). Returns original UTF-8 YAML, comments, !secret references and SHA-256 of original bytes. Includes/secrets are never expanded. Rejects inline credentials, unsafe paths, aliases, malformed YAML and files over 256 KiB with structured errors; never silently truncates. This is source inspection, not toolchain validation or physical device status. No writes, compilation, flashing or restarts."""
+        return esphome.get_config(device)
+
+    @mcp.tool(annotations=READ)
     def get_version() -> dict:
         """Report the running Hassos MCP server's installed release version, captured at process startup. Use to confirm an add-on/container update took effect. This is the plugin version, not Home Assistant's or the tunnel client's. Works offline without HA credentials; unknown means package metadata is unavailable."""
         return {"name": "Hassos MCP", "version": PLUGIN_VERSION}

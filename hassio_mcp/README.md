@@ -4,8 +4,10 @@ Connect ChatGPT to Home Assistant through an outbound Secure MCP Tunnel.
 Read entity values, Recorder/InfluxDB history, automations, and execution traces;
 review and approve automation edits in ChatGPT before applying them.
 
-Version 0.12.0 adds offline ESPHome configuration discovery with
-`esphome_list_devices`. The setup guide explains the optional ESPHome directory
+Version 0.13.0 provides offline ESPHome configuration discovery and exact reads with
+`esphome_list_devices` and `esphome_get_config`. Comments and `!secret` references
+are preserved; inline credentials are rejected without returning the file.
+The setup guide explains the optional ESPHome directory
 setting and read-only Compose mounts. File presence does not imply that a device
 is online. See [ESPHome inspection setup](https://github.com/tobias-/hassos-mcp#esphome-configuration-inspection).
 

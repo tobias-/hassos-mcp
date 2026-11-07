@@ -1,3 +1,4 @@
+import hashlib
 import json
 import os
 import sys
@@ -22,7 +23,7 @@ async def test_real_stdio_discovery_and_missing_credentials(tmp_path):
     esphome_dir = config_dir / "esphome"
     esphome_dir.mkdir()
     (esphome_dir / "solder-table.yaml").write_text(
-        "esphome:\n  name: solder-table\nesp8266:\n  board: nodemcuv2\n"
+        "esphome:\n  name: solder-table\nesp8266:\n  board: nodemcuv2\nswitch:\n  - platform: gpio\n    pin: GPIO5 # relay\n"
     )
     env["ESPHOME_CONFIG_DIR"] = str(esphome_dir)
     env["ALLOW_BLUEPRINT_WRITES"] = "false"
@@ -39,6 +40,24 @@ async def test_real_stdio_discovery_and_missing_credentials(tmp_path):
             discovery = json.loads(result.content[0].text)
             assert discovery["items"][0]["device"] == "solder-table.yaml"
             assert discovery["items"][0]["status"] == "unknown"
+            assert tools["esphome_get_config"].annotations.readOnlyHint is True
+            result = await session.call_tool(
+                "esphome_get_config", {"device": "solder-table"}
+            )
+            config = json.loads(result.content[0].text)
+            assert config["success"] and "GPIO5 # relay" in config["content"]
+            assert (
+                config["sha256"]
+                == hashlib.sha256(
+                    (esphome_dir / "solder-table.yaml").read_bytes()
+                ).hexdigest()
+            )
+            result = await session.call_tool(
+                "esphome_get_config", {"device": "../secrets.yaml"}
+            )
+            assert (
+                json.loads(result.content[0].text)["error"]["code"] == "ACCESS_DENIED"
+            )
             result = await session.call_tool("esphome_list_devices", {"limit": 101})
             assert (
                 json.loads(result.content[0].text)["error"]["code"] == "CONFIG_INVALID"

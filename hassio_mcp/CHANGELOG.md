@@ -1,3 +1,10 @@
+# 0.13.0
+
+- Add esphome_get_config for exact UTF-8 YAML reads with original-byte SHA-256, timestamps and explicit redacted/truncated flags.
+- Resolve only enumerated filenames or unique filename stems; never expand secrets, includes, packages or substitutions.
+- Reject inline credentials, unsafe/non-device files and oversized or unsupported YAML with structured errors and no source snippets.
+- Verify offline discovery and original GPIO/relay inspection through the MCP client and isolated containers.
+
 # 0.12.0
 
 - Add read-only esphome_list_devices with offline file discovery, bounded deterministic pagination, literal metadata, and explicit unknown connectivity.

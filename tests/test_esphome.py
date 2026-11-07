@@ -1,3 +1,4 @@
+import hashlib
 import json
 import os
 
@@ -170,3 +171,134 @@ def test_legacy_and_unexpanded_metadata(store):
     assert result["included.yaml"]["warnings"]
     assert result["substitution.yaml"]["name"] is None
     assert result["substitution.yaml"]["warnings"]
+
+
+def test_read_preserves_exact_bytes_comments_gpio_and_secret_references(store):
+    data = SOURCE.replace("\n", "\r\n").encode()
+    path = store.root / "solder-table.yaml"
+    path.write_bytes(data)
+    before = path.stat()
+    result = store.get_config("solder-table")
+    assert result["success"] is True
+    assert result["device"] == "solder-table.yaml"
+    assert result["content"].encode() == data
+    assert "pin: GPIO5 # Relay, active low" in result["content"]
+    assert "!secret solder_api_key" in result["content"]
+    assert result["sha256"] == hashlib.sha256(data).hexdigest()
+    assert result["size_bytes"] == len(data)
+    assert result["redacted"] is result["truncated"] is False
+    assert path.stat().st_mtime_ns == before.st_mtime_ns
+    assert path.stat().st_mode == before.st_mode
+    assert path.read_bytes() == data
+
+
+def test_hash_changes_with_original_bytes_and_ambiguous_stems_fail(store):
+    original = store.get_config("solder-table.yaml")["sha256"]
+    (store.root / "solder-table.yaml").write_text(SOURCE + "# changed\n")
+    assert store.get_config("solder-table")["sha256"] != original
+    (store.root / "solder-table.yml").write_text(SOURCE)
+    assert store.get_config("solder-table")["error"]["code"] == "CONFIG_CONFLICT"
+    assert store.get_config("solder-table.yml")["success"]
+
+
+@pytest.mark.parametrize(
+    "device",
+    [
+        "../secrets.yaml",
+        "/etc/passwd",
+        "nested/device.yaml",
+        ".hidden.yaml",
+        "a\\b.yaml",
+        "x\x00.yaml",
+    ],
+)
+def test_get_rejects_caller_paths(store, device):
+    result = store.get_config(device)
+    assert result["error"]["code"] == "ACCESS_DENIED"
+    assert "content" not in result
+
+
+def test_get_resolves_only_enumerated_device_files(store):
+    assert store.get_config("nonexistent")["error"]["code"] == "DEVICE_NOT_FOUND"
+    (store.root / "package.yaml").write_text("switch: []\n")
+    assert store.get_config("package.yaml")["error"]["code"] == "CONFIG_INVALID"
+    (store.root / "secrets.yaml").write_text("private: secret-content\n")
+    assert store.get_config("secrets.yaml")["error"]["code"] == "ACCESS_DENIED"
+    (store.root / "link.yaml").symlink_to(store.root / "secrets.yaml")
+    assert store.get_config("link.yaml")["error"]["code"] == "ACCESS_DENIED"
+
+
+@pytest.mark.parametrize(
+    "source",
+    [
+        SOURCE.replace("!secret wifi_password", '"inline-password"'),
+        SOURCE.replace("!secret solder_api_key", '"inline-encryption-key"'),
+        SOURCE.replace("!secret wifi_ssid", '"private-network-name"'),
+        SOURCE + "mqtt:\n  username: private-user\n",
+        SOURCE + "# password: hidden-comment-credential\n",
+        SOURCE + "http_request:\n  url: https://user:secret@example.invalid/\n",
+        SOURCE + 'substitutions:\n  wifi_password: "escaped\\u002dpassword"\n',
+        SOURCE + "# Bearer private-token-value\n",
+    ],
+)
+def test_inline_credentials_are_rejected_without_source_snippets(store, source):
+    (store.root / "solder-table.yaml").write_text(source)
+    result = store.get_config("solder-table")
+    assert result["error"]["code"] == "ACCESS_DENIED"
+    assert "content" not in result
+    assert "sha256" not in result
+    assert "password" not in result["error"]["message"]
+
+
+def test_known_runtime_secret_is_not_returned_even_in_comment(store, monkeypatch):
+    monkeypatch.setenv("SUPERVISOR_TOKEN", "runtime-token-never-expose")
+    (store.root / "solder-table.yaml").write_text(
+        SOURCE + "# runtime-token-never-expose\n"
+    )
+    result = store.get_config("solder-table")
+    assert result["error"]["code"] == "ACCESS_DENIED"
+    assert "runtime-token-never-expose" not in json.dumps(result)
+
+
+def test_secret_and_include_files_are_never_opened(store):
+    # A FIFO would hang if the parser attempted to expand either reference.
+    os.mkfifo(store.root / "secrets.yaml")
+    os.mkfifo(store.root / "other.yaml")
+    (store.root / "solder-table.yaml").write_text(
+        SOURCE + "packages:\n  extra: !include other.yaml\n"
+    )
+    result = store.get_config("solder-table")
+    assert result["success"] and "!include other.yaml" in result["content"]
+
+
+def test_oversized_or_malformed_yaml_returns_error_not_truncated_content(store):
+    path = store.root / "solder-table.yaml"
+    path.write_bytes(b"#" * (MAX_CONFIG_BYTES + 1))
+    result = store.get_config("solder-table")
+    assert result["error"]["code"] == "CONFIG_INVALID"
+    assert "no truncated YAML" in result["error"]["message"]
+    assert "content" not in result
+    path.write_text("esphome: [private-password\n")
+    result = store.get_config("solder-table")
+    assert result["error"]["code"] == "CONFIG_INVALID"
+    assert "private-password" not in json.dumps(result)
+
+
+def test_file_replacement_after_enumeration_cannot_follow_symlink(
+    store, monkeypatch, tmp_path
+):
+    private = tmp_path / "private.yaml"
+    private.write_text("esphome: {name: never-expose}\n")
+    original = store.filenames
+
+    def replace(fd):
+        names = original(fd)
+        path = store.root / "solder-table.yaml"
+        path.unlink()
+        path.symlink_to(private)
+        return names
+
+    monkeypatch.setattr(store, "filenames", replace)
+    result = store.get_config("solder-table")
+    assert result["error"]["code"] == "ACCESS_DENIED"
+    assert "never-expose" not in json.dumps(result)
