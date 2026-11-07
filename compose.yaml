@@ -11,6 +11,8 @@ services:
       # - /absolute/path/to/ha-config:/homeassistant:rw
       # Blueprint reads/review need the same connected HA config; read-only is sufficient:
       # - /absolute/path/to/ha-config:/homeassistant:ro
+      # Or mount only ESPHome configs and set ESPHOME_CONFIG_DIR=/esphome-config:
+      # - /absolute/path/to/esphome:/esphome-config:ro
       # Optional HTTPS client certificates:
       # - ./secrets:/run/secrets:ro
     read_only: true

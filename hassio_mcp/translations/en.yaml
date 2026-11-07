@@ -52,6 +52,16 @@ configuration:
       Configuration writes also require accepted proposals and allow_management_writes. Default: empty. Whole-file
       rollback can replace later edits; review the new diff. Setup links: open Web UI or the Documentation tab.
       https://github.com/tobias-/hassos-mcp#restricted-configuration-files'
+  esphome_config_dir:
+    name: ESPHome configuration directory
+    description: "Normally leave blank on HAOS: the app uses the esphome subdirectory of its Home Assistant configuration
+      mount (/homeassistant/esphome in this app). In ESPHome Builder, check the YAML filenames and its startup log
+      for the configuration directory. A /config/esphome path inside Builder refers to the shared HA config; use
+      /homeassistant/esphome here. For another layout, enter the absolute directory as mounted inside this MCP container.
+      Setting a path does not create a mount or grant access to another app's private storage. Compose users must
+      mount the directory read-only and set ESPHOME_CONFIG_DIR to that container path. Blank = HA_CONFIG_DIR/esphome.
+      Compose example: /esphome-config. Discovery never implies that a device is online. Setup links: open Web UI
+      or the Documentation tab. https://github.com/tobias-/hassos-mcp#esphome-configuration-inspection"
   influx_url:
     name: InfluxDB server URL
     description: "Open the InfluxDB add-on's Information tab and copy its Hostname. Use http://HOSTNAME:8086, or

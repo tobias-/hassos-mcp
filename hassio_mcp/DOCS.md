@@ -106,6 +106,20 @@ Default: empty. Whole-file rollback can replace later edits; review the new diff
 
 [Restricted configuration editing](https://github.com/tobias-/hassos-mcp#restricted-configuration-files)
 
+## ESPHome configuration discovery
+
+Find stored device configurations even when the hardware is offline. This only inspects local YAML; it does not check device connectivity or run ESPHome Builder.
+
+### ESPHome configuration directory
+
+Configuration field: `esphome_config_dir`
+
+Normally leave blank on HAOS: the app uses the esphome subdirectory of its Home Assistant configuration mount (/homeassistant/esphome in this app). In ESPHome Builder, check the YAML filenames and its startup log for the configuration directory. A /config/esphome path inside Builder refers to the shared HA config; use /homeassistant/esphome here. For another layout, enter the absolute directory as mounted inside this MCP container. Setting a path does not create a mount or grant access to another app's private storage. Compose users must mount the directory read-only and set ESPHOME_CONFIG_DIR to that container path.
+
+Blank = HA_CONFIG_DIR/esphome. Compose example: /esphome-config. Discovery never implies that a device is online.
+
+[ESPHome mount and recovery setup](https://github.com/tobias-/hassos-mcp#esphome-configuration-inspection) · [ESPHome Builder configuration](https://github.com/esphome/home-assistant-addon/blob/main/esphome/config.yaml) · [Home Assistant mount paths](https://contributors.home-assistant.io/apps/reference/configuration/#folders) · [ESPHome YAML and secrets](https://esphome.io/guides/yaml/)
+
 ## InfluxDB history
 
 Home Assistant's Recorder history works without InfluxDB settings. Add InfluxDB only for data already stored there. Choose the database server's major version, not the Home Assistant add-on release number.

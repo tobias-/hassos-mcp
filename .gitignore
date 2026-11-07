@@ -14,3 +14,4 @@ secrets/
 *.pem
 *.key
 /hassos-mcp-feature-request.md
+/esphome-mcp-extension-spec.md

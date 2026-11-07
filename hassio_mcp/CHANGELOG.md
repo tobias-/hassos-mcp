@@ -1,3 +1,9 @@
+# 0.12.0
+
+- Add read-only esphome_list_devices with offline file discovery, bounded deterministic pagination, literal metadata, and explicit unknown connectivity.
+- Resolve the ESPHome root from the HA config mount or an explicit ESPHome directory setting, with linked HAOS and Compose setup instructions.
+- Exclude secrets, symlinks, hard links, nonregular files, oversized/complex YAML and unsafe metadata; report non-device YAML separately.
+
 # 0.11.2
 
 - Fix blueprint consumer inspection when Home Assistant returns expanded runtime configuration without the original blueprint reference.

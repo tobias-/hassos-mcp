@@ -167,6 +167,36 @@ GROUPS = [
         ],
     },
     {
+        "id": "esphome",
+        "title": "ESPHome configuration discovery",
+        "badge": "Read-only",
+        "intro": "Find stored device configurations even when the hardware is offline. This only inspects local YAML; it does not check device connectivity or run ESPHome Builder.",
+        "fields": [
+            {
+                "key": "esphome_config_dir",
+                "name": "ESPHome configuration directory",
+                "required": False,
+                "help": "Normally leave blank on HAOS: the app uses the esphome subdirectory of its Home Assistant configuration mount (/homeassistant/esphome in this app). In ESPHome Builder, check the YAML filenames and its startup log for the configuration directory. A /config/esphome path inside Builder refers to the shared HA config; use /homeassistant/esphome here. For another layout, enter the absolute directory as mounted inside this MCP container. Setting a path does not create a mount or grant access to another app's private storage. Compose users must mount the directory read-only and set ESPHOME_CONFIG_DIR to that container path.",
+                "example": "Blank = HA_CONFIG_DIR/esphome. Compose example: /esphome-config. Discovery never implies that a device is online.",
+                "links": [
+                    (
+                        "ESPHome mount and recovery setup",
+                        "https://github.com/tobias-/hassos-mcp#esphome-configuration-inspection",
+                    ),
+                    (
+                        "ESPHome Builder configuration",
+                        "https://github.com/esphome/home-assistant-addon/blob/main/esphome/config.yaml",
+                    ),
+                    (
+                        "Home Assistant mount paths",
+                        "https://contributors.home-assistant.io/apps/reference/configuration/#folders",
+                    ),
+                    ("ESPHome YAML and secrets", "https://esphome.io/guides/yaml/"),
+                ],
+            },
+        ],
+    },
+    {
         "id": "influx",
         "title": "InfluxDB history",
         "badge": "Optional",

@@ -19,6 +19,12 @@ async def test_real_stdio_discovery_and_missing_credentials(tmp_path):
         "blueprint:\n  name: Test\n  domain: automation\ntriggers: []\nactions: []\n"
     )
     env["HA_CONFIG_DIR"] = str(config_dir)
+    esphome_dir = config_dir / "esphome"
+    esphome_dir.mkdir()
+    (esphome_dir / "solder-table.yaml").write_text(
+        "esphome:\n  name: solder-table\nesp8266:\n  board: nodemcuv2\n"
+    )
+    env["ESPHOME_CONFIG_DIR"] = str(esphome_dir)
     env["ALLOW_BLUEPRINT_WRITES"] = "false"
     params = StdioServerParameters(
         command=sys.executable, args=["-m", "hassio_mcp.server"], env=env
@@ -27,6 +33,16 @@ async def test_real_stdio_discovery_and_missing_credentials(tmp_path):
         async with ClientSession(read, write) as session:
             await session.initialize()
             tools = {tool.name: tool for tool in (await session.list_tools()).tools}
+            assert tools["esphome_list_devices"].annotations.readOnlyHint is True
+            result = await session.call_tool("esphome_list_devices", {})
+            assert not result.isError
+            discovery = json.loads(result.content[0].text)
+            assert discovery["items"][0]["device"] == "solder-table.yaml"
+            assert discovery["items"][0]["status"] == "unknown"
+            result = await session.call_tool("esphome_list_devices", {"limit": 101})
+            assert (
+                json.loads(result.content[0].text)["error"]["code"] == "CONFIG_INVALID"
+            )
             assert tools["get_version"].annotations.readOnlyHint is True
             result = await session.call_tool("get_version", {})
             assert not result.isError
