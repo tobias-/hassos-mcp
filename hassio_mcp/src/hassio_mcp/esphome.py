@@ -24,6 +24,13 @@ PLATFORMS = ("esp8266", "esp32", "rp2040", "bk72xx", "rtl87xx", "ln882x", "host"
 PRIVATE_FIELDS = re.compile(
     r"(?:^|_)(?:key|psk|ssid|bssid|username|identity|certificate|ca_cert)$", re.I
 )
+# These identify the device's own access point and local web account. They are
+# not passwords or credentials for an external service/network. Keep exceptions
+# scoped to exact YAML paths; scan their contents for actual credentials anyway.
+PUBLIC_IDENTIFIER_PATHS = {
+    ("wifi", "ap", "ssid"),
+    ("web_server", "auth", "username"),
+}
 
 
 class ESPHomeError(Exception):
@@ -119,11 +126,18 @@ def parse(source):
 def check_credentials(document, source, settings):
     """Reject rather than return a misleading, redacted replacement document."""
 
-    def check(node):
+    def check(node, path=()):
         if isinstance(node, MappingNode):
             for key, value in node.value:
+                child_path = (*path, key.value)
+                public_identifier = (
+                    child_path in PUBLIC_IDENTIFIER_PATHS
+                    and isinstance(value, ScalarNode)
+                    and value.tag == "tag:yaml.org,2002:str"
+                )
                 if (
                     (SENSITIVE.search(key.value) or PRIVATE_FIELDS.search(key.value))
+                    and not public_identifier
                     and value.tag != "!secret"
                     and not (
                         isinstance(value, ScalarNode)
@@ -131,10 +145,10 @@ def check_credentials(document, source, settings):
                     )
                 ):
                     raise ValueError("inline credentials")
-                check(value)
+                check(value, child_path)
         elif not isinstance(node, ScalarNode):
-            for child in node.value:
-                check(child)
+            for index, child in enumerate(node.value):
+                check(child, (*path, index))
         elif node.tag != "!secret":
             ensure_no_credentials(node.value, settings)
 

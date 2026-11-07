@@ -30,6 +30,12 @@ async def check_images(images, directory):
     private = directory / "private.yaml"
     private.write_text(source.replace("!secret wifi_password", "private-test-password"))
     private.chmod(0o444)
+    socket_source = (
+        Path(__file__).resolve().parents[1] / "tests/fixtures/esphome-socket.yaml"
+    ).read_text()
+    socket_config = directory / "socket-1.yaml"
+    socket_config.write_text(socket_source)
+    socket_config.chmod(0o444)
     project = Path(__file__).resolve().parents[1] / "hassio_mcp/pyproject.toml"
     expected_version = tomllib.loads(project.read_text())["project"]["version"]
     for image in images:
@@ -82,6 +88,12 @@ async def check_images(images, directory):
             assert read["success"] and read["content"] == source
             assert read["sha256"] == hashlib.sha256(source.encode()).hexdigest()
             assert read["redacted"] is read["truncated"] is False
+            result = await session.call_tool(
+                "esphome_get_config", {"device": "socket-1"}
+            )
+            read = json.loads(result.content[0].text)
+            assert read["success"] and read["content"] == socket_source
+            assert read["sha256"] == hashlib.sha256(socket_source.encode()).hexdigest()
             result = await session.call_tool(
                 "esphome_get_config", {"device": "private.yaml"}
             )

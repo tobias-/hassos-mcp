@@ -1,6 +1,7 @@
 import hashlib
 import json
 import os
+from pathlib import Path
 
 import pytest
 from hassio_mcp.config import Settings
@@ -190,6 +191,56 @@ def test_read_preserves_exact_bytes_comments_gpio_and_secret_references(store):
     assert path.stat().st_mtime_ns == before.st_mtime_ns
     assert path.stat().st_mode == before.st_mode
     assert path.read_bytes() == data
+
+
+def test_socket_config_public_identifiers_preserve_source_and_secret_references(store):
+    source = (Path(__file__).parent / "fixtures/esphome-socket.yaml").read_bytes()
+    (store.root / "socket-1.yaml").write_bytes(source)
+    # Inspection must not resolve the secret references.
+    os.mkfifo(store.root / "secrets.yaml")
+    result = store.get_config("socket-1")
+    assert result["success"], result
+    assert result["content"].encode() == source
+    assert result["sha256"] == hashlib.sha256(source).hexdigest()
+    assert result["redacted"] is False
+    record = next(
+        r for r in store.list_devices()["items"] if r["device"] == "socket-1.yaml"
+    )
+    assert record["name"] == "socket-1" and not record["warnings"]
+
+
+@pytest.mark.parametrize(
+    "fragment",
+    [
+        "wifi:\n  ap:\n    ssid: Public AP\n    password: inline-password\n",
+        "web_server:\n  auth:\n    username: esp\n    password: inline-password\n",
+        'wifi:\n  ap:\n    ssid: "Bearer inline-token"\n',
+        'web_server:\n  auth:\n    username: "https://user:password@example.invalid"\n',
+        "wifi:\n  ap:\n    ssid: {password: inline-password}\n",
+        "other:\n  wifi:\n    ap:\n      ssid: private-network\n",
+        "other:\n  web_server:\n    auth:\n      username: private-user\n",
+    ],
+)
+def test_public_identifier_exceptions_do_not_bypass_credential_checks(store, fragment):
+    (store.root / "socket-1.yaml").write_text("esphome: {name: socket-1}\n" + fragment)
+    result = store.get_config("socket-1")
+    assert result["error"]["code"] == "ACCESS_DENIED"
+    assert "content" not in result
+
+
+@pytest.mark.parametrize(
+    "fragment",
+    [
+        "wifi:\n  ap:\n    ssid: known-private-token\n",
+        "web_server:\n  auth:\n    username: known-private-token\n",
+    ],
+)
+def test_public_identifiers_still_reject_known_credentials(store, fragment):
+    store.settings.ha_token = "known-private-token"
+    (store.root / "socket-1.yaml").write_text("esphome: {name: socket-1}\n" + fragment)
+    result = store.get_config("socket-1")
+    assert result["error"]["code"] == "ACCESS_DENIED"
+    assert "known-private-token" not in json.dumps(result)
 
 
 def test_hash_changes_with_original_bytes_and_ambiguous_stems_fail(store):

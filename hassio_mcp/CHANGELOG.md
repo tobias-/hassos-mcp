@@ -1,3 +1,8 @@
+# 0.16.2
+
+- Fix false credential detection for literal fallback hotspot names (`wifi.ap.ssid`) and local web account names (`web_server.auth.username`) in ESPHome configurations.
+- Preserve exact YAML and !secret references. Continue rejecting inline passwords, encryption keys, external network/account identifiers and known credentials, including within the newly allowed fields.
+
 # 0.16.1
 
 - Advertise the installed Hassos MCP release in the MCP initialization response, matching get_version instead of falling back to the MCP SDK version.

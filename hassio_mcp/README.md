@@ -7,6 +7,10 @@ review and approve automation edits in ChatGPT before applying them.
 Version 0.13.0 provides offline ESPHome configuration discovery and exact reads with
 `esphome_list_devices` and `esphome_get_config`. Comments and `!secret` references
 are preserved; inline credentials are rejected without returning the file.
+Fallback hotspot names (`wifi.ap.ssid`) and local web usernames
+(`web_server.auth.username`) can be literal values from 0.16.2 onward. Passwords
+and encryption keys must still use `!secret`; known credentials remain blocked
+even in those identifier fields.
 The setup guide explains the optional ESPHome directory
 setting and read-only Compose mounts. File presence does not imply that a device
 is online. See [ESPHome inspection setup](https://github.com/tobias-/hassos-mcp#esphome-configuration-inspection).

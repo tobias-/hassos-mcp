@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "hassio-mcp"
-version = "0.16.1"
+version = "0.16.2"
 description = "Private Home Assistant MCP with reviewed automation changes"
 requires-python = ">=3.12"
 dependencies = ["mcp==1.30.0", "httpx==0.28.1", "websockets==15.0.1", "ruamel.yaml==0.18.17"]
