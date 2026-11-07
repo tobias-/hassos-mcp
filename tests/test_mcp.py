@@ -32,7 +32,8 @@ async def test_real_stdio_discovery_and_missing_credentials(tmp_path):
     )
     async with stdio_client(params) as (read, write):
         async with ClientSession(read, write) as session:
-            await session.initialize()
+            initialized = await session.initialize()
+            assert initialized.serverInfo.version == version("hassio-mcp")
             tools = {tool.name: tool for tool in (await session.list_tools()).tools}
             assert tools["esphome_list_devices"].annotations.readOnlyHint is True
             result = await session.call_tool("esphome_list_devices", {})
@@ -99,7 +100,7 @@ async def test_real_stdio_discovery_and_missing_credentials(tmp_path):
             assert not result.isError
             assert json.loads(result.content[0].text) == {
                 "name": "Hassos MCP",
-                "version": version("hassio-mcp"),
+                "version": initialized.serverInfo.version,
             }
             assert {
                 "apply_automation_change",

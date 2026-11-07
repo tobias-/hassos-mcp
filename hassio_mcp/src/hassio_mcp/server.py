@@ -110,6 +110,10 @@ def build_server(settings=None, ha=None):
         ),
     )
 
+    # FastMCP 1.30 does not expose a version constructor argument. Set the
+    # underlying server's version so initialize reports our release, not the SDK.
+    mcp._mcp_server.version = PLUGIN_VERSION
+
     @mcp.tool(annotations=READ)
     def esphome_list_devices(limit: int = 50, offset: int = 0) -> dict:
         """Discover ESPHome configuration files even when devices are offline. Returns stable filename IDs, literal metadata, warnings and skipped non-device/unsafe files. Follow next_offset; limit 1–100. Status and HA registration remain unknown. Does not expand packages, includes, substitutions or secrets, contact devices, validate firmware, or modify files. Failures return success=false with a structured error."""

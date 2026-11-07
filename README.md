@@ -4,7 +4,7 @@ A private MCP server for ChatGPT, running as a local HAOS app/add-on or Docker C
 
 ## Capabilities
 
-- Report the running plugin release with `get_version`, even when Home Assistant is offline. Refresh the ChatGPT tool list after upgrading to 0.11.1 to discover it.
+- Report the running plugin release with `get_version`, even when Home Assistant is offline. From 0.16.1, MCP initialization advertises the same installed release in `serverInfo.version`. After upgrading, refresh the ChatGPT connection to reload metadata. ChatGPT controls whether its page displays this version and any development-mode badge.
 - Read all current entity values and attributes, with filtering and pagination.
 - Read Recorder state history and long-term statistics, subject to retention and exclusions.
 - Read InfluxDB 1.x or 2.x history through bounded queries, including aggregates.

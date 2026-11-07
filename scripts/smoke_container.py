@@ -54,7 +54,8 @@ async def check_images(images, directory):
             stdio_client(params) as (read, write),
             ClientSession(read, write) as session,
         ):
-            await session.initialize()
+            initialized = await session.initialize()
+            assert initialized.serverInfo.version == expected_version
             tools = {tool.name: tool for tool in (await session.list_tools()).tools}
             assert tools["get_version"].annotations.readOnlyHint is True
             result = await session.call_tool("get_version", {})

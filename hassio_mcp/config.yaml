@@ -1,5 +1,5 @@
 name: Home Assistant Private MCP
-version: "0.16.0"
+version: "0.16.1"
 slug: hassio_mcp
 url: https://github.com/tobias-/hassos-mcp
 description: Private ChatGPT access to states, history, traces and reviewed automation edits

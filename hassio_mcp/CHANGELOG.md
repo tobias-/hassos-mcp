@@ -1,3 +1,8 @@
+# 0.16.1
+
+- Advertise the installed Hassos MCP release in the MCP initialization response, matching get_version instead of falling back to the MCP SDK version.
+- Verify the advertised version through real MCP sessions and both deployment images. Refresh the ChatGPT connection after upgrading to load updated metadata; ChatGPT controls its own development-mode labels.
+
 # 0.16.0
 
 - Implement ESPHome Phase 4: isolated compilation, persistent progress, immutable artifact IDs and firmware/source/snapshot hashes.
