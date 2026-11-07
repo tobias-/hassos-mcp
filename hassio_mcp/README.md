@@ -11,6 +11,14 @@ The setup guide explains the optional ESPHome directory
 setting and read-only Compose mounts. File presence does not imply that a device
 is online. See [ESPHome inspection setup](https://github.com/tobias-/hassos-mcp#esphome-configuration-inspection).
 
+Version 0.16.0 completes the ESPHome extension: live status/logs, toolchain
+validation, reviewed source changes with backups, isolated compilation, and
+artifact-specific approved OTA. Install/configure the separate **Hassos MCP
+ESPHome worker** from this repository for runtime operations. Source changes
+and OTA have independent permission switches and require exact acceptance.
+Keep both `esphome_apply_config_change` and `esphome_install` on ask every time.
+[Worker setup and OTA flow](https://github.com/tobias-/hassos-mcp/blob/master/esphome_worker/README.md).
+
 Version 0.11.0 adds dependency inspection, reviewed rollback, script/scene CRUD,
 registry discovery, diagnostics, accepted service/device actions, and allowlisted
 configuration-file editing. Refresh the ChatGPT plugin's tools after updating.

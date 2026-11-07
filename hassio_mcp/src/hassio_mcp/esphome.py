@@ -27,12 +27,14 @@ PRIVATE_FIELDS = re.compile(
 
 
 class ESPHomeError(Exception):
-    def __init__(self, code, message, retryable=False):
+    def __init__(self, code, message, retryable=False, **details):
         super().__init__(message)
         self.code, self.message, self.retryable = code, message, retryable
+        self.details = details
 
     def result(self):
         return {
+            **self.details,
             "success": False,
             "error": {
                 "code": self.code,

@@ -101,10 +101,18 @@ class ESPHomeChanges:
 
     @public_errors
     async def status(self, proposal_id):
+        try:
+            proposal = self.reviews.status(proposal_id)
+        except ValueError:
+            raise ESPHomeError("CONFIG_CONFLICT", "Unknown ESPHome proposal.") from None
+        if proposal["kind"] not in ("esphome_config", "esphome_install"):
+            raise ESPHomeError(
+                "ACCESS_DENIED", "Proposal belongs to another operation."
+            )
         return {
             "success": True,
             "proposal_id": proposal_id,
-            **self.proposal(proposal_id),
+            **proposal,
         }
 
     @public_errors

@@ -16,6 +16,7 @@ class Settings:
     esphome_worker_url: str = ""
     esphome_worker_token: str = field(default="", repr=False)
     esphome_config_writes_enabled: bool = False
+    esphome_install_enabled: bool = False
     yaml_files: tuple[str, ...] = ()
     config_files: tuple[str, ...] = ()
     writes_enabled: bool = False
@@ -44,6 +45,8 @@ class Settings:
             esphome_config_dir=env.get("ESPHOME_CONFIG_DIR", ""),
             esphome_worker_url=env.get("ESPHOME_WORKER_URL", ""),
             esphome_worker_token=env.get("ESPHOME_WORKER_TOKEN", ""),
+            esphome_install_enabled=env.get("ALLOW_ESPHOME_INSTALL", "false").lower()
+            == "true",
             esphome_config_writes_enabled=env.get(
                 "ALLOW_ESPHOME_CONFIG_WRITES", "false"
             ).lower()

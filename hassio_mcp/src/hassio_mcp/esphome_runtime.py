@@ -134,8 +134,8 @@ class ESPHomeRuntime:
                 "BUILDER_UNAVAILABLE",
                 "Configure the isolated ESPHome worker URL and matching token (at least 32 characters); the configuration mount alone cannot execute ESPHome.",
             )
-        validate_url(self.settings.esphome_worker_url)
         try:
+            validate_url(self.settings.esphome_worker_url)
             async with httpx.AsyncClient(
                 timeout=30,
                 trust_env=False,
@@ -165,7 +165,10 @@ class ESPHomeRuntime:
                                 "BUILDER_UNAVAILABLE",
                                 "ESPHome worker response exceeded its limit.",
                             )
-                    return json.loads(body)
+                    result = json.loads(body)
+                    if not isinstance(result, dict):
+                        raise ValueError("Expected structured worker response")
+                    return result
         except (httpx.HTTPError, ValueError):
             raise ESPHomeError(
                 "BUILDER_UNAVAILABLE",
@@ -173,8 +176,20 @@ class ESPHomeRuntime:
                 True,
             ) from None
 
-    async def execute(self, device, operation, snapshot, lines=100, operation_id=None):
+    async def execute(
+        self, device, operation, snapshot, lines=100, operation_id=None, extra=None
+    ):
         operation_id = operation_id or uuid.uuid4().hex
+        try:
+            return await self._execute(
+                device, operation, snapshot, lines, operation_id, extra
+            )
+        except ESPHomeError as exc:
+            raise ESPHomeError(
+                exc.code, exc.message, exc.retryable, operation_id=operation_id
+            ) from None
+
+    async def _execute(self, device, operation, snapshot, lines, operation_id, extra):
         result = await self.request(
             "POST",
             "/jobs",
@@ -184,6 +199,7 @@ class ESPHomeRuntime:
                 "operation": operation,
                 "snapshot": snapshot,
                 "lines": lines,
+                **(extra or {}),
             },
         )
         deadline = time.monotonic() + 20

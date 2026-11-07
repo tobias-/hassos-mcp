@@ -25,3 +25,5 @@ jobs:
       - run: docker build --target compose -t hassio-mcp:ci hassio_mcp
       - run: docker build -t hassio-mcp-haos:ci hassio_mcp
       - run: python scripts/smoke_container.py hassio-mcp:ci hassio-mcp-haos:ci
+      - run: docker build -t hassio-mcp-esphome-worker:ci esphome_worker
+      - run: python scripts/smoke_esphome_worker.py hassio-mcp-esphome-worker:ci

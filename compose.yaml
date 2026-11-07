@@ -25,16 +25,18 @@ services:
   esphome-worker:
     profiles: [esphome]
     build: ./esphome_worker
-    user: "10001:10001"
+    user: "0:10001"
     restart: unless-stopped
     environment:
       ESPHOME_WORKER_TOKEN: ${ESPHOME_WORKER_TOKEN:-}
+      ALLOW_ESPHOME_INSTALL: ${ALLOW_ESPHOME_INSTALL:-false}
     volumes:
       - esphome-worker-data:/data/worker
     read_only: true
     tmpfs:
       - /tmp:mode=1777,size=256m
     cap_drop: [ALL]
+    cap_add: [CHOWN, SETUID, SETGID, KILL]
     security_opt: [no-new-privileges:true]
     mem_limit: 3g
     cpus: 2

@@ -1,0 +1,7 @@
+configuration:
+  worker_token:
+    name: Dedicated worker authentication token
+    description: Generate a random token with openssl rand -hex 32 and enter the same value in this worker and the MCP app's ESPHome worker authentication token field. Never reuse a Home Assistant/OpenAI key. Setup https://github.com/tobias-/hassos-mcp/blob/master/esphome_worker/README.md
+  allow_install:
+    name: Allow explicitly accepted native OTA installations
+    description: Keep off until esphome_install asks every time in ChatGPT. OTA also requires the MCP permission, an accepted exact artifact/device proposal, and live encrypted API identity verification. One attempt only; never retry an unknown outcome automatically. Setup https://github.com/tobias-/hassos-mcp/blob/master/esphome_worker/README.md#firmware-and-ota

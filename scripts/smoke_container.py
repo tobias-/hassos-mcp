@@ -89,6 +89,16 @@ async def check_images(images, directory):
             )
             assert "private-test-password" not in result.content[0].text
             assert {
+                "esphome_get_status",
+                "esphome_get_logs",
+                "esphome_validate",
+                "esphome_propose_config_change",
+                "esphome_apply_config_change",
+                "esphome_compile",
+                "esphome_propose_install",
+                "esphome_install",
+                "esphome_operation_status",
+                "esphome_change_status",
                 "get_config_file",
                 "propose_config_file_change",
                 "apply_config_file_change",
@@ -97,6 +107,26 @@ async def check_images(images, directory):
                 "discover_home_assistant",
                 "propose_blueprint_rollback",
             } <= tools.keys()
+            result = await session.call_tool(
+                "esphome_install",
+                {
+                    "device": "solder-table",
+                    "artifact_id": "a" * 32,
+                    "firmware_sha256": "b" * 64,
+                    "proposal_id": "test",
+                    "approved_digest": "test",
+                },
+            )
+            assert (
+                json.loads(result.content[0].text)["error"]["code"] == "ACCESS_DENIED"
+            )
+            result = await session.call_tool(
+                "esphome_apply_config_change",
+                {"proposal_id": "test", "approved_digest": "test"},
+            )
+            assert (
+                json.loads(result.content[0].text)["error"]["code"] == "ACCESS_DENIED"
+            )
             for name in (
                 "apply_resource_change",
                 "apply_service_action",

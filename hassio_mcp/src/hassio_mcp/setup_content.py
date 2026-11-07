@@ -173,6 +173,19 @@ GROUPS = [
         "intro": "Find stored device configurations even when the hardware is offline. This only inspects local YAML; it does not check device connectivity or run ESPHome Builder.",
         "fields": [
             {
+                "key": "allow_esphome_install",
+                "name": "Allow explicitly accepted ESPHome OTA",
+                "required": False,
+                "help": "First set ChatGPT to ask every time for esphome_install. Each installation requires a compiled artifact/hash and a fresh accepted proposal naming the exact MAC, model and LAN address. Enable this switch and allow_install in the companion worker. Compose uses ALLOW_ESPHOME_INSTALL for both. A live encrypted native API identity and matching board/name are mandatory. The worker attempts native OTA once; transfers usually reboot the device. Unknown outcomes must be inspected, never automatically retried.",
+                "example": "Default: off. Source editing or compilation never grants OTA approval.",
+                "links": [
+                    (
+                        "OTA identity, artifact and recovery requirements",
+                        "https://github.com/tobias-/hassos-mcp/blob/master/esphome_worker/README.md#firmware-and-ota",
+                    )
+                ],
+            },
+            {
                 "key": "allow_esphome_config_writes",
                 "name": "Allow accepted ESPHome configuration changes",
                 "required": False,

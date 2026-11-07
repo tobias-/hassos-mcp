@@ -1,3 +1,10 @@
+# 0.16.0
+
+- Implement ESPHome Phase 4: isolated compilation, persistent progress, immutable artifact IDs and firmware/source/snapshot hashes.
+- Add exact-device OTA proposals and single-use acceptance, separate MCP/worker OTA permissions, authenticated live MAC/model/name checks and pinned target addresses.
+- Recheck firmware bytes before one native OTA attempt. No automatic upload retries/fallbacks; timeout/lost acknowledgement returns an unknown outcome with a pollable operation ID.
+- Add a worker health check, controlled build cleanup/history bounds, actual ESP8266 compilation smoke coverage and OTA preflight/approval/uncertainty tests.
+
 # 0.15.0
 
 - Implement ESPHome Phase 3: toolchain-validated immutable config proposals, exact diffs/content hashes, separate write permission and explicit acceptance.

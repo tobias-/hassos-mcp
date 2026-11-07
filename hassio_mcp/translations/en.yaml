@@ -52,6 +52,14 @@ configuration:
       Configuration writes also require accepted proposals and allow_management_writes. Default: empty. Whole-file
       rollback can replace later edits; review the new diff. Setup links: open Web UI or the Documentation tab.
       https://github.com/tobias-/hassos-mcp#restricted-configuration-files'
+  allow_esphome_install:
+    name: Allow explicitly accepted ESPHome OTA
+    description: 'First set ChatGPT to ask every time for esphome_install. Each installation requires a compiled
+      artifact/hash and a fresh accepted proposal naming the exact MAC, model and LAN address. Enable this switch
+      and allow_install in the companion worker. Compose uses ALLOW_ESPHOME_INSTALL for both. A live encrypted native
+      API identity and matching board/name are mandatory. The worker attempts native OTA once; transfers usually
+      reboot the device. Unknown outcomes must be inspected, never automatically retried. Default: off. Source editing
+      or compilation never grants OTA approval. Setup links: open Web UI or the Documentation tab. https://github.com/tobias-/hassos-mcp/blob/master/esphome_worker/README.md#firmware-and-ota'
   allow_esphome_config_writes:
     name: Allow accepted ESPHome configuration changes
     description: 'First configure ChatGPT to ask every time for esphome_apply_config_change, then enable this switch.

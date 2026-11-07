@@ -15,6 +15,7 @@ from .dependencies import Dependencies
 from .discovery import discover
 from .esphome import ESPHome
 from .esphome_changes import ESPHomeChanges
+from .esphome_firmware import ESPHomeFirmware
 from .esphome_runtime import ESPHomeRuntime
 from .ha import HomeAssistant, entity, time_range
 from .influx import Influx
@@ -65,6 +66,7 @@ def build_server(settings=None, ha=None):
     esphome = ESPHome(settings)
     esphome_runtime = ESPHomeRuntime(settings)
     esphome_changes = ESPHomeChanges(esphome_runtime, reviews)
+    esphome_firmware = ESPHomeFirmware(esphome_runtime, esphome_changes)
     mcp = FastMCP(
         "Home Assistant Private",
         instructions=(
@@ -100,7 +102,11 @@ def build_server(settings=None, ha=None):
             "ESPHome discovery does not check connectivity. Follow next_offset, including pages of skipped files. "
             "ESPHome configuration writes require proposing the exact YAML, reviewing the diff and impact, "
             "and WAITING for explicit acceptance before esphome_apply_config_change. "
-            "Backups and rollback require fresh proposals; inspect esphome_change_status after uncertain writes."
+            "Backups and rollback require fresh proposals; inspect esphome_change_status after uncertain writes. "
+            "Compilation never authorizes installation. For ESPHome OTA: compile, inspect the artifact hash "
+            "and live device identity, propose installation for the explicit MAC, show exact artifact/identity/impact, "
+            "then WAIT for explicit user acceptance before esphome_install. Set esphome_install to ask every time. "
+            "Never retry unknown OTA outcomes; poll the original operation_id and inspect device state."
         ),
     )
 
@@ -167,6 +173,35 @@ def build_server(settings=None, ha=None):
     async def esphome_propose_config_rollback(proposal_id: str) -> dict:
         """Prepare a fresh validated proposal restoring the original YAML backup. Review the new diff and obtain explicit acceptance before esphome_apply_config_change. Later edits may be overwritten; no automatic rollback or firmware operation."""
         return await esphome_changes.rollback(proposal_id)
+
+    @mcp.tool(annotations=PROPOSE)
+    async def esphome_compile(
+        device: str, approved_config_proposal_id: str | None = None
+    ) -> dict:
+        """Compile the current or selected applied ESPHome configuration version in the isolated worker, with time/resource limits and one active job. NEVER installs firmware. Returns immutable artifact ID/hash when complete, otherwise operation_id for polling. Includes version, duration and bounded logs. Only standalone ESP8266/ESP32 runtime configs are supported."""
+        return await esphome_firmware.compile(device, approved_config_proposal_id)
+
+    @mcp.tool(annotations=PROPOSE)
+    async def esphome_propose_install(
+        device: str, artifact_id: str, firmware_sha256: str, expected_mac: str
+    ) -> dict:
+        """Prepare explicit OTA approval for an exact device MAC and immutable firmware artifact. Requires matching current source/secrets and a live encrypted native API identity with compatible board/name. Show artifact hash, target identity/address and reboot/GPIO effects, then WAIT for acceptance. Does not install."""
+        return await esphome_firmware.propose_install(
+            device, artifact_id, firmware_sha256, expected_mac
+        )
+
+    @mcp.tool(annotations=WRITE)
+    async def esphome_install(
+        device: str,
+        artifact_id: str,
+        firmware_sha256: str,
+        proposal_id: str,
+        approved_digest: str,
+    ) -> dict:
+        """WRITE FIRMWARE: Require explicit acceptance and client confirmation EVERY call for this exact OTA proposal/device/artifact/hash. Rechecks artifact and snapshot; worker rechecks encrypted device identity and performs one native OTA attempt. Usually reboots the device. Poll operation_id; success confirms transfer acknowledgement only. Never automatically retry failure/unknown outcomes or infer installation approval from compile/config approval."""
+        return await esphome_firmware.install(
+            device, artifact_id, firmware_sha256, proposal_id, approved_digest
+        )
 
     @mcp.tool(annotations=READ)
     async def esphome_operation_status(operation_id: str) -> dict:

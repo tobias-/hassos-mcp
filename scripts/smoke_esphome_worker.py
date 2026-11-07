@@ -22,7 +22,7 @@ wifi:
 """
 
 
-def main(image):
+def main(image, compile_firmware=False):
     token = "worker-smoke-test-token-not-a-real-secret-1234"
     container = subprocess.check_output(
         [
@@ -30,6 +30,31 @@ def main(image):
             "run",
             "--rm",
             "-d",
+            "--user",
+            "0:10001",
+            "--read-only",
+            "--cap-drop",
+            "ALL",
+            "--cap-add",
+            "CHOWN",
+            "--cap-add",
+            "SETUID",
+            "--cap-add",
+            "SETGID",
+            "--cap-add",
+            "KILL",
+            "--security-opt",
+            "no-new-privileges:true",
+            "--memory",
+            "3g",
+            "--cpus",
+            "2",
+            "--pids-limit",
+            "128",
+            "--tmpfs",
+            "/tmp:mode=1777,size=256m",
+            "--volume",
+            "/data/worker",
             "-p",
             "127.0.0.1::6053",
             "-e",
@@ -89,6 +114,23 @@ def main(image):
                 },
             ).json()
             assert repeated["status"] == "succeeded"
+            probe = "import pathlib,sys\nfor name in sys.argv[1:]:\n try: pathlib.Path(name).read_bytes()\n except PermissionError: pass\n else: raise SystemExit('private data accessible to another job')\n"
+            subprocess.run(
+                [
+                    "docker",
+                    "exec",
+                    "--user",
+                    "20002:2000",
+                    container,
+                    "python3",
+                    "-c",
+                    probe,
+                    f"/data/worker/{job}/secrets.yaml",
+                    "/data/worker/jobs.sqlite3",
+                ],
+                check=True,
+                capture_output=True,
+            )
             logs = client.get(
                 "/logs", params={"device": "test.yaml", "lines": 10}
             ).json()
@@ -97,6 +139,43 @@ def main(image):
             print(
                 "Pinned ESPHome validation, private snapshot, retained logs, authentication and idempotency passed"
             )
+            if compile_firmware:
+                job = uuid.uuid4().hex
+                result = client.post(
+                    "/jobs",
+                    json={
+                        "operation_id": job,
+                        "device": "test.yaml",
+                        "operation": "compile",
+                        "snapshot": snapshot,
+                    },
+                ).json()
+                deadline = time.monotonic() + 1810
+                while result.get("status") == "running" and time.monotonic() < deadline:
+                    time.sleep(2)
+                    result = client.get("/jobs/" + job).json()
+                assert result.get("success"), result
+                artifact = client.get("/artifacts/" + job).json()
+                assert (
+                    artifact["success"]
+                    and artifact["firmware_sha256"] == result["firmware_sha256"]
+                )
+                assert (
+                    artifact["platform"] == "esp8266" and artifact["size_bytes"] > 10000
+                )
+                install = client.post(
+                    "/jobs",
+                    json={
+                        "operation_id": uuid.uuid4().hex,
+                        "device": "test.yaml",
+                        "operation": "install",
+                        "snapshot": snapshot,
+                    },
+                ).json()
+                assert install["error"]["code"] == "ACCESS_DENIED"
+                print(
+                    "Real ESP8266 compilation, immutable artifact/hash lookup, and disabled OTA gate passed"
+                )
     finally:
         subprocess.run(
             ["docker", "stop", "-t", "2", container],
@@ -106,4 +185,4 @@ def main(image):
 
 
 if __name__ == "__main__":
-    main(sys.argv[1])
+    main(sys.argv[1], "--compile" in sys.argv[2:])
