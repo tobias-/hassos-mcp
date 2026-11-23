@@ -107,6 +107,28 @@ async def test_failed_validation_never_creates_proposal(changes):
         assert db.execute("SELECT COUNT(*) FROM proposals").fetchone()[0] == 0
 
 
+async def test_redacted_source_and_placeholder_proposals_never_write_or_save_backup(
+    changes,
+):
+    path = changes.runtime.files.root / "controller.yaml"
+    current = changes.runtime.files.get_config("controller")
+    result = await changes.propose(
+        "controller", AFTER + 'note: "<secret>"\n', current["sha256"]
+    )
+    assert result["error"]["code"] == "CONFIG_INVALID"
+    source = SOURCE.replace("!secret wifi_password", "private-inline-password")
+    path.write_text(source)
+    redacted = changes.runtime.files.get_config("controller")
+    assert redacted["redacted"]
+    result = await changes.propose(
+        "controller", redacted["content"], redacted["sha256"]
+    )
+    assert result["error"]["code"] == "ACCESS_DENIED"
+    assert path.read_text() == source
+    with changes.reviews.db() as db:
+        assert db.execute("SELECT COUNT(*) FROM proposals").fetchone()[0] == 0
+
+
 async def test_uncertain_replace_is_consumed_and_backup_remains(changes, monkeypatch):
     proposal = await propose(changes)
     original = os.fsync

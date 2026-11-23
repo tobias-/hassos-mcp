@@ -97,9 +97,10 @@ async def check_images(images, directory):
             result = await session.call_tool(
                 "esphome_get_config", {"device": "private.yaml"}
             )
-            assert (
-                json.loads(result.content[0].text)["error"]["code"] == "ACCESS_DENIED"
-            )
+            redacted = json.loads(result.content[0].text)
+            assert redacted["success"] and redacted["redacted"]
+            assert redacted["writeback_safe"] is False and redacted["warnings"]
+            assert "<secret>" in redacted["content"]
             assert "private-test-password" not in result.content[0].text
             assert {
                 "esphome_get_status",
@@ -188,7 +189,7 @@ async def check_images(images, directory):
             result = await session.call_tool("list_suggestions", {})
             assert not result.isError and "Smoke test" in result.content[0].text
             print(
-                f"{image}: version {expected_version}, offline ESPHome discovery/reads, credential rejection, MCP discovery, suggestion box, and disabled-write guards passed"
+                f"{image}: version {expected_version}, offline ESPHome discovery/reads, credential redaction, MCP discovery, suggestion box, and disabled-write guards passed"
             )
 
 

@@ -61,7 +61,17 @@ class ESPHomeRuntime:
 
     def snapshot(self, device, replacement=None):
         original = require(self.files.get_config(device))
+        if original.get("redacted"):
+            raise ESPHomeError(
+                "ACCESS_DENIED",
+                "Source contains inline credentials and was redacted for inspection. Move them to secrets.yaml locally before runtime operations or configuration proposals; never use the redacted view as replacement YAML.",
+            )
         source = original["content"] if replacement is None else replacement
+        if "<secret>" in source:
+            raise ESPHomeError(
+                "CONFIG_INVALID",
+                "Redaction placeholders are display-only and cannot be validated, compiled or written back. Supply !secret references instead.",
+            )
         if len(source.encode()) > MAX_CONFIG_BYTES:
             raise ESPHomeError("CONFIG_INVALID", "Configuration exceeds 256 KiB.")
         document = parse(source)

@@ -1,3 +1,9 @@
+# 0.17.0
+
+- Return ESPHome configuration views with inline credentials replaced by `<secret>` instead of rejecting the entire file. Preserve existing `!secret` references without expanding them.
+- Mark redacted views explicitly, warn agents that they are inspection-only, and retain hashes/sizes of the original bytes. Omit comments and normalize YAML only when redaction is needed.
+- Keep runtime snapshots and write proposals protected: reject credential-bearing originals and redaction placeholders, without creating proposals or modifying source files.
+
 # 0.16.2
 
 - Fix false credential detection for literal fallback hotspot names (`wifi.ap.ssid`) and local web account names (`web_server.auth.username`) in ESPHome configurations.

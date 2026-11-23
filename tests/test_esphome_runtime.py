@@ -70,6 +70,18 @@ def test_proposed_inline_credentials_are_not_sent(runtime):
         )
 
 
+def test_redacted_source_and_replacement_placeholders_never_reach_worker(runtime):
+    with pytest.raises(ESPHomeError, match="placeholders"):
+        runtime.snapshot("controller", SOURCE + 'comment: "<secret>"\n')
+    path = runtime.files.root / "controller.yaml"
+    path.write_text(SOURCE.replace("!secret password", "private-password"))
+    assert runtime.files.get_config("controller")["redacted"] is True
+    with pytest.raises(ESPHomeError, match="redacted"):
+        runtime.snapshot("controller")
+    with pytest.raises(ESPHomeError, match="redacted"):
+        runtime.snapshot("controller", SOURCE)
+
+
 def worker_module():
     spec = importlib.util.spec_from_file_location(
         "esphome_worker_test", Path(__file__).parents[1] / "esphome_worker/worker.py"

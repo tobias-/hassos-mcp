@@ -224,8 +224,16 @@ def test_socket_config_public_identifiers_preserve_source_and_secret_references(
 def test_public_identifier_exceptions_do_not_bypass_credential_checks(store, fragment):
     (store.root / "socket-1.yaml").write_text("esphome: {name: socket-1}\n" + fragment)
     result = store.get_config("socket-1")
-    assert result["error"]["code"] == "ACCESS_DENIED"
-    assert "content" not in result
+    assert result["success"] and result["redacted"]
+    assert "<secret>" in result["content"]
+    for value in (
+        "inline-password",
+        "inline-token",
+        "user:password",
+        "private-network",
+        "private-user",
+    ):
+        assert value not in result["content"]
 
 
 @pytest.mark.parametrize(
@@ -235,11 +243,11 @@ def test_public_identifier_exceptions_do_not_bypass_credential_checks(store, fra
         "web_server:\n  auth:\n    username: known-private-token\n",
     ],
 )
-def test_public_identifiers_still_reject_known_credentials(store, fragment):
+def test_public_identifiers_still_redact_known_credentials(store, fragment):
     store.settings.ha_token = "known-private-token"
     (store.root / "socket-1.yaml").write_text("esphome: {name: socket-1}\n" + fragment)
     result = store.get_config("socket-1")
-    assert result["error"]["code"] == "ACCESS_DENIED"
+    assert result["success"] and result["redacted"]
     assert "known-private-token" not in json.dumps(result)
 
 
@@ -292,13 +300,27 @@ def test_get_resolves_only_enumerated_device_files(store):
         SOURCE + "# Bearer private-token-value\n",
     ],
 )
-def test_inline_credentials_are_rejected_without_source_snippets(store, source):
+def test_inline_credentials_are_redacted_with_warning_and_original_hash(store, source):
     (store.root / "solder-table.yaml").write_text(source)
     result = store.get_config("solder-table")
-    assert result["error"]["code"] == "ACCESS_DENIED"
-    assert "content" not in result
-    assert "sha256" not in result
-    assert "password" not in result["error"]["message"]
+    assert result["success"] and result["redacted"]
+    assert result["writeback_safe"] is False and result["warnings"]
+    assert "<secret>" in result["content"]
+    assert result["sha256"] == hashlib.sha256(source.encode()).hexdigest()
+    assert result["sha256_scope"] == "original_file_bytes"
+    assert "GPIO5" in result["content"]
+    for value in (
+        "inline-password",
+        "inline-encryption-key",
+        "private-network-name",
+        "private-user",
+        "hidden-comment-credential",
+        "user:secret",
+        "escaped-password",
+        "private-token-value",
+    ):
+        assert value not in json.dumps(result)
+    assert (store.root / "solder-table.yaml").read_text() == source
 
 
 def test_known_runtime_secret_is_not_returned_even_in_comment(store, monkeypatch):
@@ -307,8 +329,53 @@ def test_known_runtime_secret_is_not_returned_even_in_comment(store, monkeypatch
         SOURCE + "# runtime-token-never-expose\n"
     )
     result = store.get_config("solder-table")
-    assert result["error"]["code"] == "ACCESS_DENIED"
+    assert result["success"] and result["redacted"]
     assert "runtime-token-never-expose" not in json.dumps(result)
+
+
+def test_redaction_handles_blocks_escaped_values_copies_and_secret_references(store):
+    source = (
+        SOURCE.replace("!secret solder_api_key", '"clear\\u002dkey"')
+        + """
+mqtt:
+  password: |
+    multi-line-credential
+    continued-credential
+http_request:
+  headers:
+    Authorization: Bearer header-credential
+notes:
+  copied_key: clear-key
+  copied_inside_text: "using clear-key here"
+credentials:
+  nested: hidden-nested-credential
+"""
+    )
+    path = store.root / "solder-table.yaml"
+    path.write_text(source)
+    os.mkfifo(store.root / "secrets.yaml")
+    result = store.get_config("solder-table")
+    assert result["success"] and result["redacted"]
+    assert "!secret wifi_password" in result["content"]
+    assert "!secret wifi_ssid" in result["content"]
+    for value in (
+        "clear-key",
+        "multi-line-credential",
+        "continued-credential",
+        "header-credential",
+        "hidden-nested-credential",
+    ):
+        assert value not in json.dumps(result)
+    assert path.read_text() == source
+
+
+def test_redacted_read_does_not_leak_known_credentials_in_mapping_keys(store):
+    store.settings.ha_token = "known-private-token"
+    source = SOURCE + "notes:\n  known-private-token: ordinary text\n"
+    (store.root / "solder-table.yaml").write_text(source)
+    result = store.get_config("solder-table")
+    assert result["success"] and result["redacted"]
+    assert "known-private-token" not in json.dumps(result)
 
 
 def test_secret_and_include_files_are_never_opened(store):
