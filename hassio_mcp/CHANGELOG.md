@@ -1,3 +1,9 @@
+# 0.19.0
+
+- Add bounded, redacted ZHA/zigpy logs and human-approved temporary debug captures with durable deadlines and explicit restoration maps.
+- Read Supervisor Core logs when the legacy error-log endpoint is unavailable; clearly label warning/error-only fallback.
+- Accept scoped dynamic logger fields for reviewed non-debug service actions.
+
 # 0.18.0
 
 - Add optional scoped PostgreSQL/TimescaleDB reads with native parameters, SELECT-only AST checks, read-only transactions, timeouts, row/byte limits and persistent audit events.

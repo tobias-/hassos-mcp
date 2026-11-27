@@ -64,6 +64,7 @@ def main():
             "postgres_admin_password": "POSTGRES_ADMIN_PASSWORD",
             "postgres_sslmode": "POSTGRES_SSLMODE",
             "postgres_tables": "POSTGRES_TABLES",
+            "allow_zha_debug": "ALLOW_ZHA_DEBUG",
             "allow_postgres_writes": "ALLOW_POSTGRES_WRITES",
             "ha_token": "HA_TOKEN",
             "tunnel_id": "CONTROL_PLANE_TUNNEL_ID",

@@ -244,6 +244,20 @@ Grant bucket Read access; this app does not need Write access.
 
 [Create a scoped InfluxDB API token](https://docs.influxdata.com/influxdb/v2/admin/tokens/create-token/)
 
+## Zigbee diagnostics
+
+Read-only logs work without enabling changes. Temporary debug logging requires a human-approved restoration plan.
+
+### Allow temporary Zigbee debug logging
+
+Configuration field: `allow_zha_debug`
+
+Keep off until zha_apply_debug and zha_apply_restore ask every time in ChatGPT. A human must verify and accept the exact logger scope, duration and restoration levels. Cleanup is best effort while MCP runs and resumes on restart.
+
+false
+
+[Zigbee diagnostics setup](https://github.com/tobias-/hassos-mcp/blob/master/docs/zigbee-diagnostics.md)
+
 ## PostgreSQL and TimescaleDB
 
 Scoped SQL reads and separately accepted columnstore administration. Read credentials and admin credentials are independent.

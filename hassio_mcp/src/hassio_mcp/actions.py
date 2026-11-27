@@ -4,6 +4,7 @@ import json
 import re
 
 from .dependencies import Dependencies
+from .diagnostics import levels
 from .ha import HAError, entity
 from .privacy import ensure_no_credentials
 
@@ -75,7 +76,17 @@ class Actions:
         schema = await self.schema(domain, service)
         if "target" in schema and schema["target"] is not None and not targets:
             raise ValueError("Select explicit entity_ids for a targeted service")
-        unknown = data.keys() - schema.get("fields", {}).keys()
+        if domain == "logger" and service == "set_level":
+            levels(data)
+            if targets:
+                raise ValueError("Logger actions do not accept entity targets.")
+            if "debug" in data.values():
+                raise ValueError(
+                    "Use zha_propose_debug for time-bounded, human-approved debug logging."
+                )
+            unknown = set()
+        else:
+            unknown = data.keys() - schema.get("fields", {}).keys()
         if unknown:
             raise ValueError(
                 "Unsupported service fields: " + ", ".join(sorted(unknown))

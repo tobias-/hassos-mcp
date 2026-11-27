@@ -1,5 +1,6 @@
 import asyncio
 import json
+import os
 import re
 from datetime import UTC, datetime
 from urllib.parse import quote
@@ -73,6 +74,44 @@ class HomeAssistant:
                                 "Response too large; narrow the time range or entity selection"
                             )
                     return chunks.decode() if text else json.loads(chunks)
+            except httpx.HTTPError:
+                raise HAError("transport") from None
+
+    async def core_logs(self, lines=1000):
+        """Fixed Supervisor Core log endpoint, bounded before parsing or returning."""
+        token = os.environ.get("SUPERVISOR_TOKEN")
+        url = (
+            "http://supervisor/core/logs"
+            if token
+            else self.settings.ha_url + "/api/hassio/core/logs"
+        )
+        token = token or self.settings.ha_token
+        if not token:
+            raise ValueError("Configure HA authentication for log reads.")
+        async with httpx.AsyncClient(
+            verify=self.settings.tls(),
+            timeout=10,
+            trust_env=False,
+            headers={"Authorization": "Bearer " + token},
+        ) as client:
+            try:
+                async with client.stream(
+                    "GET", url, params={"lines": lines, "no_colors": ""}
+                ) as response:
+                    if response.status_code >= 300:
+                        raise HAError(response.status_code)
+                    raw = bytearray()
+                    truncated = False
+                    async for chunk in response.aiter_bytes():
+                        raw.extend(chunk)
+                        if len(raw) > 1024 * 1024:
+                            del raw[1024 * 1024 :]
+                            truncated = True
+                            break
+                    text = raw.decode("utf-8", "replace")
+                    if truncated:
+                        text = text.rsplit("\n", 1)[0] if "\n" in text else ""
+                    return text, truncated
             except httpx.HTTPError:
                 raise HAError("transport") from None
 

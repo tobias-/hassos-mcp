@@ -133,6 +133,11 @@ configuration:
       Token. Grant Read for your Home Assistant bucket, then copy the token here. Leave the v1 username and password
       blank. Grant bucket Read access; this app does not need Write access. Setup links: open Web UI or the Documentation
       tab. https://docs.influxdata.com/influxdb/v2/admin/tokens/create-token/'
+  allow_zha_debug:
+    name: Allow temporary Zigbee debug logging
+    description: 'Keep off until zha_apply_debug and zha_apply_restore ask every time in ChatGPT. A human must verify
+      and accept the exact logger scope, duration and restoration levels. Cleanup is best effort while MCP runs
+      and resumes on restart. false Setup links: open Web UI or the Documentation tab. https://github.com/tobias-/hassos-mcp/blob/master/docs/zigbee-diagnostics.md'
   postgres_host:
     name: PostgreSQL host
     description: 'Copy the PostgreSQL/TimescaleDB app hostname from its Information tab, or use the trusted database

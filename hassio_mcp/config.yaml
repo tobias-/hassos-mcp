@@ -1,5 +1,5 @@
 name: Home Assistant Private MCP
-version: "0.18.0"
+version: "0.19.0"
 slug: hassio_mcp
 url: https://github.com/tobias-/hassos-mcp
 description: Private ChatGPT access to states, history, traces and reviewed automation edits
@@ -8,6 +8,8 @@ startup: application
 boot: auto
 init: false
 homeassistant_api: true
+hassio_api: true
+hassio_role: homeassistant
 ingress: true
 ingress_port: 8099
 panel_title: MCP setup guide
@@ -47,6 +49,7 @@ options:
   postgres_admin_password: ""
   postgres_sslmode: require
   postgres_tables: []
+  allow_zha_debug: false
   allow_postgres_writes: false
 schema:
   tunnel_id: str
@@ -83,4 +86,5 @@ schema:
   postgres_sslmode: list(disable|require|verify-full)
   postgres_tables:
     - str
+  allow_zha_debug: bool
   allow_postgres_writes: bool

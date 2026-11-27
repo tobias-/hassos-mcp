@@ -352,6 +352,31 @@ GROUPS = [
 
 GROUPS.append(
     {
+        "id": "zigbee",
+        "badge": "Optional",
+        "title": "Zigbee diagnostics",
+        "intro": "Read-only logs work without enabling changes. Temporary debug logging requires a human-approved restoration plan.",
+        "fields": [
+            {
+                "key": "allow_zha_debug",
+                "required": False,
+                "name": "Allow temporary Zigbee debug logging",
+                "where": "Home Assistant app configuration",
+                "example": "false",
+                "help": "Keep off until zha_apply_debug and zha_apply_restore ask every time in ChatGPT. A human must verify and accept the exact logger scope, duration and restoration levels. Cleanup is best effort while MCP runs and resumes on restart.",
+                "links": [
+                    (
+                        "Zigbee diagnostics setup",
+                        "https://github.com/tobias-/hassos-mcp/blob/master/docs/zigbee-diagnostics.md",
+                    )
+                ],
+            }
+        ],
+    }
+)
+
+GROUPS.append(
+    {
         "id": "postgres",
         "title": "PostgreSQL and TimescaleDB",
         "badge": "Optional",

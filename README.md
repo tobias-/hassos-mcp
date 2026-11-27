@@ -211,3 +211,7 @@ Prefer native resource APIs. For package YAML or other explicitly allowlisted co
 ## PostgreSQL and TimescaleDB
 
 Use `postgres_query` and `postgres_inspect` for scoped historical data and metadata reads. `postgres_propose_admin` prepares exact columnstore SQL; `postgres_apply_admin` requires human acceptance every time and a separate disabled-by-default write permission. [Database setup and limits](docs/postgres.md).
+
+### Zigbee diagnostics
+
+Read bounded redacted ZHA/zigpy logs, optionally filtered by IEEE, and request temporary debug captures with explicitly accepted restoration levels. All logging changes require human confirmation; no destructive Zigbee commands are added. See [setup, approval and cleanup limitations](docs/zigbee-diagnostics.md).

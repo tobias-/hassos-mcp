@@ -26,6 +26,7 @@ class Settings:
     postgres_admin_password: str = field(default="", repr=False)
     postgres_sslmode: str = "require"
     postgres_tables: tuple[str, ...] = ()
+    zha_debug_enabled: bool = False
     postgres_writes_enabled: bool = False
     yaml_files: tuple[str, ...] = ()
     config_files: tuple[str, ...] = ()
@@ -61,6 +62,7 @@ class Settings:
                 "ALLOW_ESPHOME_CONFIG_WRITES", "false"
             ).lower()
             == "true",
+            zha_debug_enabled=env.get("ALLOW_ZHA_DEBUG", "false").lower() == "true",
             postgres_host=env.get("POSTGRES_HOST", ""),
             postgres_database=env.get("POSTGRES_DATABASE", ""),
             postgres_user=env.get("POSTGRES_USER", ""),

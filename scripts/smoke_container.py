@@ -63,6 +63,28 @@ async def check_images(images, directory):
             initialized = await session.initialize()
             assert initialized.serverInfo.version == expected_version
             tools = {tool.name: tool for tool in (await session.list_tools()).tools}
+            for name in (
+                "zha_logs",
+                "zha_capture_status",
+                "postgres_query",
+                "postgres_inspect",
+                "postgres_audit_log",
+            ):
+                assert tools[name].annotations.readOnlyHint is True
+            for name in (
+                "zha_apply_debug",
+                "zha_apply_restore",
+                "postgres_apply_admin",
+            ):
+                assert tools[name].annotations.destructiveHint is True
+                result = await session.call_tool(
+                    name, {"proposal_id": "fake", "approved_digest": "fake"}
+                )
+                assert "disabled" in result.content[0].text
+                assert (
+                    result.isError
+                    or json.loads(result.content[0].text)["success"] is False
+                )
             assert tools["get_version"].annotations.readOnlyHint is True
             result = await session.call_tool("get_version", {})
             assert not result.isError
