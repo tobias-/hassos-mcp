@@ -244,6 +244,110 @@ Grant bucket Read access; this app does not need Write access.
 
 [Create a scoped InfluxDB API token](https://docs.influxdata.com/influxdb/v2/admin/tokens/create-token/)
 
+## PostgreSQL and TimescaleDB
+
+Scoped SQL reads and separately accepted columnstore administration. Read credentials and admin credentials are independent.
+
+### PostgreSQL host
+
+Configuration field: `postgres_host`
+
+Copy the PostgreSQL/TimescaleDB app hostname from its Information tab, or use the trusted database server address. One configured server only; tools cannot choose connection URLs.
+
+Default: ""
+
+[Database setup and permissions](https://github.com/tobias-/hassos-mcp/blob/master/docs/postgres.md)
+
+### PostgreSQL port
+
+Configuration field: `postgres_port`
+
+Use the PostgreSQL server port, usually 5432. This connects directly to PostgreSQL, not pgAdmin.
+
+Default: 5432
+
+[Database setup and permissions](https://github.com/tobias-/hassos-mcp/blob/master/docs/postgres.md)
+
+### PostgreSQL database
+
+Configuration field: `postgres_database`
+
+Use the database containing your historical tables. Create dedicated roles and grant only required schemas/tables; do not use the postgres superuser.
+
+Default: ""
+
+[Database setup and permissions](https://github.com/tobias-/hassos-mcp/blob/master/docs/postgres.md)
+
+### PostgreSQL read-only role
+
+Configuration field: `postgres_user`
+
+Create a non-superuser role with CONNECT, schema USAGE and SELECT only on approved tables and metadata views. Revoke access to unsafe user-defined functions. The MCP additionally forces read-only transactions and an SQL allowlist.
+
+Default: ""
+
+[Database setup and permissions](https://github.com/tobias-/hassos-mcp/blob/master/docs/postgres.md)
+
+### PostgreSQL read-only password
+
+Configuration field: `postgres_password`
+
+Set the dedicated read-only role password locally. Never paste credentials into SQL tools; values stay in app options.
+
+Default: ""
+
+[Database setup and permissions](https://github.com/tobias-/hassos-mcp/blob/master/docs/postgres.md)
+
+### PostgreSQL scoped maintenance role
+
+Configuration field: `postgres_admin_user`
+
+Optional separate non-superuser role owning only approved Timescale hypertables. Never grant superuser, CREATEROLE, CREATEDB, replication or BYPASSRLS. Maintenance tools support columnstore settings and policy creation only.
+
+Default: ""
+
+[Database setup and permissions](https://github.com/tobias-/hassos-mcp/blob/master/docs/postgres.md)
+
+### PostgreSQL maintenance password
+
+Configuration field: `postgres_admin_password`
+
+Optional password for the scoped maintenance role. Leave blank with the maintenance role unset to keep writes unavailable.
+
+Default: ""
+
+[Database setup and permissions](https://github.com/tobias-/hassos-mcp/blob/master/docs/postgres.md)
+
+### PostgreSQL TLS mode
+
+Configuration field: `postgres_sslmode`
+
+Use require for encrypted transport, verify-full with a trusted certificate and matching hostname. Use disable only for a trusted private container/LAN server without TLS.
+
+Default: require
+
+[Database setup and permissions](https://github.com/tobias-/hassos-mcp/blob/master/docs/postgres.md)
+
+### PostgreSQL allowed tables
+
+Configuration field: `postgres_tables`
+
+List exact lowercase schema.table names, for example timeseries.sensor_readings. Read SQL must use these relations or built-in metadata views. Maintenance is restricted to these exact targets.
+
+Default: []
+
+[Database setup and permissions](https://github.com/tobias-/hassos-mcp/blob/master/docs/postgres.md)
+
+### Allow human-approved PostgreSQL maintenance
+
+Configuration field: `allow_postgres_writes`
+
+Keep off until postgres_apply_admin asks every time in ChatGPT. Every operation requires an exact SQL proposal, human acceptance, digest, expiry and one-time use. A consumed or uncertain write must never be retried automatically.
+
+Default: false
+
+[Database setup and permissions](https://github.com/tobias-/hassos-mcp/blob/master/docs/postgres.md)
+
 ## Save and connect
 
 1. Enter the values in this add-on's Configuration tab, then Save and restart the add-on. This guide does not collect or display your credentials.

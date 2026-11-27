@@ -55,6 +55,16 @@ def main():
         options = json.loads(options_path.read_text())
         mapping = {
             "ha_url": "HA_URL",
+            "postgres_host": "POSTGRES_HOST",
+            "postgres_port": "POSTGRES_PORT",
+            "postgres_database": "POSTGRES_DATABASE",
+            "postgres_user": "POSTGRES_USER",
+            "postgres_password": "POSTGRES_PASSWORD",
+            "postgres_admin_user": "POSTGRES_ADMIN_USER",
+            "postgres_admin_password": "POSTGRES_ADMIN_PASSWORD",
+            "postgres_sslmode": "POSTGRES_SSLMODE",
+            "postgres_tables": "POSTGRES_TABLES",
+            "allow_postgres_writes": "ALLOW_POSTGRES_WRITES",
             "ha_token": "HA_TOKEN",
             "tunnel_id": "CONTROL_PLANE_TUNNEL_ID",
             "openai_api_key": "CONTROL_PLANE_API_KEY",

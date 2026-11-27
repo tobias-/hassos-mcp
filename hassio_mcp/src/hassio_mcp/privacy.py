@@ -14,6 +14,8 @@ def ensure_no_credentials(value, settings):
         item
         for item in (
             settings.ha_token,
+            settings.postgres_password,
+            settings.postgres_admin_password,
             settings.influx_password,
             settings.influx_token,
             settings.esphome_worker_token,

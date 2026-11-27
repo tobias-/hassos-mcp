@@ -207,3 +207,7 @@ Set `config_files` / `HA_CONFIG_FILES` to exact relative YAML paths and mount th
 Prefer native resource APIs. For package YAML or other explicitly allowlisted config, use `propose_config_file_change` with full content, or null to delete. Review the exact whole-file diff and limited static dependency report, obtain explicit acceptance, then call `apply_config_file_change`. Requires `allow_management_writes`. Local YAML checks precede approval; full HA validation reads the accepted file after atomic replacement. Invalid configuration is restored before reload if no external edit intervened. Otherwise the backup is retained and the failure reported as uncertain. Only an optional reviewed automation/script/scene/template reload occurs; restart requires a separate accepted service action.
 
 `propose_config_file_rollback` creates a new reviewed restoration of the whole backed-up file; it can replace later edits, so inspect the new diff. Use `management_change_status` for backups and outcomes. As with native edits, external editors do not share a transaction: avoid concurrent changes. Existing parent directories are required for new files.
+
+## PostgreSQL and TimescaleDB
+
+Use `postgres_query` and `postgres_inspect` for scoped historical data and metadata reads. `postgres_propose_admin` prepares exact columnstore SQL; `postgres_apply_admin` requires human acceptance every time and a separate disabled-by-default write permission. [Database setup and limits](docs/postgres.md).

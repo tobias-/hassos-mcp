@@ -1,3 +1,9 @@
+# 0.18.0
+
+- Add optional scoped PostgreSQL/TimescaleDB reads with native parameters, SELECT-only AST checks, read-only transactions, timeouts, row/byte limits and persistent audit events.
+- Add separately accepted columnstore settings and policy creation for allowlisted hypertables using a distinct limited maintenance role; retain raw rows and reject arbitrary/destructive administrative SQL.
+- Add linked setup for database roles, credentials, TLS and table scope; verify against real TimescaleDB 2.23/PostgreSQL 17.
+
 # 0.17.0
 
 - Return ESPHome configuration views with inline credentials replaced by `<secret>` instead of rejecting the entire file. Preserve existing `!secret` references without expanding them.

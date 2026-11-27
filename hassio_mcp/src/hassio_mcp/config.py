@@ -17,6 +17,16 @@ class Settings:
     esphome_worker_token: str = field(default="", repr=False)
     esphome_config_writes_enabled: bool = False
     esphome_install_enabled: bool = False
+    postgres_host: str = ""
+    postgres_port: int = 5432
+    postgres_database: str = ""
+    postgres_user: str = ""
+    postgres_password: str = field(default="", repr=False)
+    postgres_admin_user: str = ""
+    postgres_admin_password: str = field(default="", repr=False)
+    postgres_sslmode: str = "require"
+    postgres_tables: tuple[str, ...] = ()
+    postgres_writes_enabled: bool = False
     yaml_files: tuple[str, ...] = ()
     config_files: tuple[str, ...] = ()
     writes_enabled: bool = False
@@ -50,6 +60,17 @@ class Settings:
             esphome_config_writes_enabled=env.get(
                 "ALLOW_ESPHOME_CONFIG_WRITES", "false"
             ).lower()
+            == "true",
+            postgres_host=env.get("POSTGRES_HOST", ""),
+            postgres_database=env.get("POSTGRES_DATABASE", ""),
+            postgres_user=env.get("POSTGRES_USER", ""),
+            postgres_password=env.get("POSTGRES_PASSWORD", ""),
+            postgres_admin_user=env.get("POSTGRES_ADMIN_USER", ""),
+            postgres_admin_password=env.get("POSTGRES_ADMIN_PASSWORD", ""),
+            postgres_sslmode=env.get("POSTGRES_SSLMODE", "require"),
+            postgres_port=int(env.get("POSTGRES_PORT", "5432")),
+            postgres_tables=tuple(json.loads(env.get("POSTGRES_TABLES", "[]"))),
+            postgres_writes_enabled=env.get("ALLOW_POSTGRES_WRITES", "false").lower()
             == "true",
             yaml_files=tuple(json.loads(env.get("HA_YAML_FILES", "[]"))),
             config_files=tuple(json.loads(env.get("HA_CONFIG_FILES", "[]"))),
